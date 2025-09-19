@@ -108,7 +108,7 @@ class G1JointLocomotionEnv(DirectRLEnv):
         self._height_scanner = RayCaster(self.cfg.height_scanner)
         self.scene.sensors["height_scanner"] = self._height_scanner
 
-        # number of envs
+        #number of envs
         self.cfg.terrain.num_envs = self.scene.cfg.num_envs
         self.cfg.terrain.env_spacing = self.scene.cfg.env_spacing
         self.scene._terrain = self.cfg.terrain.class_type(self.cfg.terrain)
@@ -119,9 +119,8 @@ class G1JointLocomotionEnv(DirectRLEnv):
 
         
         # clone and replicate
-        #self.scene.clone_environments(copy_from_source=False)
+        self.scene.clone_environments(copy_from_source=False)
         self.cfg.sky_light_cfg.func("/World/Light", self.cfg.sky_light_cfg)
-        self.scene.filter_collisions()
 
 
     def _pre_physics_step(self, actions: torch.Tensor):

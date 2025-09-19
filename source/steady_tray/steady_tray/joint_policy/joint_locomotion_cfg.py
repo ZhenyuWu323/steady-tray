@@ -52,6 +52,6 @@ class G1JointLocomotionEnvCfg(G1RobotPlateSceneCfg):
     observations: JointLocomotionObservationsCfg = JointLocomotionObservationsCfg()
 
     # scene
-    scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=2000, env_spacing=2.5, replicate_physics=False)
+    scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=8192, env_spacing=2.5, replicate_physics=True)
 
 
