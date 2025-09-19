@@ -22,7 +22,7 @@ import_packages(__name__, _BLACKLIST_PKGS)
 
 
 # Register Gym environments.
-from .tasks import *
+from .joint_policy import *
 
 # Register UI extensions.
 from .ui_extension_example import *

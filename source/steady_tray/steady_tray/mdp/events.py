@@ -5,11 +5,11 @@ import isaaclab.utils.math as math_utils
 from isaaclab.assets import RigidObject, Articulation
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.markers import VisualizationMarkers, VisualizationMarkersCfg
-from isaaclab.envs import DirectRLEnv
+from isaaclab.envs import DirectRLEnv, ManagerBasedEnv
 from pxr import Gf, Sdf, UsdGeom, Vt
 import omni
 import isaaclab.sim as sim_utils
-from isaaclab.utils.math import quat_apply
+from isaaclab.utils.math import quat_apply, quat_from_euler_xyz
 _all_forces = torch.tensor([])
 
 def randomize_cylinder_scale(
@@ -383,13 +383,15 @@ def randomize_object_com(
 
 
 
-def reset_plate_state(
-    env: DirectRLEnv,
+def reset_plate_object_state(
+    env: DirectRLEnv | ManagerBasedEnv,
     env_ids: torch.Tensor,
     robot_asset_cfg: SceneEntityCfg = SceneEntityCfg("robot", body_names="pelvis"),
     plate_asset_cfg: SceneEntityCfg = SceneEntityCfg("plate"),
     object_asset_cfg: Optional[SceneEntityCfg] = None,
-    plate_offset: list[float] = [0.42, 0.0, 0.12],
+    plate_offset: list[float] = [0.34058, 0.0, 0.14185],
+    plate_xy_rand_radius: float = 0.01,
+    object_xy_rand_radius: float = 0.08,
     object_z_up: float = 0.1,
 ):
     """Reset the state of the plate."""
@@ -405,54 +407,43 @@ def reset_plate_state(
     ).unsqueeze(0).expand(len(env_ids), -1)
     offset_world = quat_apply(reference_frame_states[:, 3:7], plate_offset_tensor)
     plate_pos_world = reference_frame_states[:, :3] + offset_world
+
+    if plate_xy_rand_radius > 0.0:
+        random_radius = torch.sqrt(torch.rand(len(env_ids), device=env.device)) * plate_xy_rand_radius
+        random_angle = torch.rand(len(env_ids), device=env.device) * 2 * math.pi
+        plate_pos_world[:, 0] += random_radius * torch.cos(random_angle)
+        plate_pos_world[:, 1] += random_radius * torch.sin(random_angle)
+
+    # reset plate
     plate_asset.write_root_link_pose_to_sim(torch.cat([plate_pos_world, plate_asset.data.default_root_state[env_ids, 3:7]], dim=-1), env_ids=env_ids)
     plate_asset.write_root_com_velocity_to_sim(torch.zeros((len(env_ids), 6), device=env.device), env_ids=env_ids)
+
 
     # reset object
     if object_asset_cfg is not None:
         object_asset: RigidObject = env.scene[object_asset_cfg.name]
+        object_pos_world = plate_pos_world.clone()
+
+        if object_xy_rand_radius > 0.0:
+
+            random_radius = torch.sqrt(torch.rand(len(env_ids), device=env.device)) * object_xy_rand_radius
+            random_angle = torch.rand(len(env_ids), device=env.device) * 2 * math.pi
+            
+            random_x = random_radius * torch.cos(random_angle)
+            random_y = random_radius * torch.sin(random_angle)
+            object_pos_world[:, 0] += random_x  # x offset
+            object_pos_world[:, 1] += random_y  # y offset
+
         if isinstance(object_asset.cfg.spawn, sim_utils.CylinderCfg):
             object_z_up = object_asset.cfg.spawn.height / 2
-        object_pos_world = plate_pos_world.clone()
         object_pos_world[:, 2] += object_z_up
-        object_asset.write_root_link_pose_to_sim(torch.cat([object_pos_world, object_asset.data.default_root_state[env_ids, 3:7]], dim=-1), env_ids=env_ids)
+
+
+        random_yaw = torch.rand(len(env_ids), device=env.device) * 2 * math.pi
+        object_quat = quat_from_euler_xyz(
+            torch.zeros_like(random_yaw),
+            torch.zeros_like(random_yaw), 
+            random_yaw
+        )
+        object_asset.write_root_link_pose_to_sim(torch.cat([object_pos_world, object_quat], dim=-1), env_ids=env_ids)
         object_asset.write_root_com_velocity_to_sim(torch.zeros((len(env_ids), 6), device=env.device), env_ids=env_ids)
-
-
-def reset_object_state(
-    env: DirectRLEnv,
-    env_ids: torch.Tensor,
-    robot_asset_cfg: SceneEntityCfg = SceneEntityCfg("robot", body_names="plate"),
-    object_asset_cfg: SceneEntityCfg = SceneEntityCfg("object"),
-    object_z_up: float = 0.1,
-    random_position_radius: float = 0.08
-):
-    """Reset the state of the object."""
-    # extract the used quantities (to enable type-hinting)
-    object_asset: RigidObject = env.scene[object_asset_cfg.name]
-    robot_asset: Articulation = env.scene[robot_asset_cfg.name]
-    plate_body_index = robot_asset_cfg.body_ids
-
-    reference_frame_states = robot_asset.data.body_state_w[env_ids, plate_body_index, :].clone()
-    num_envs = len(env_ids)
-    device = env.device
-    object_pos_world = reference_frame_states[:, :3].clone()
-
-    if random_position_radius > 0.0:
-
-        random_radius = torch.sqrt(torch.rand(num_envs, device=device)) * random_position_radius
-        random_angle = torch.rand(num_envs, device=device) * 2 * math.pi
-        
-        # Convert to cartesian coordinates in plate frame
-        random_x = random_radius * torch.cos(random_angle)
-        random_y = random_radius * torch.sin(random_angle)
-        object_pos_world[:, 0] += random_x  # x offset
-        object_pos_world[:, 1] += random_y  # y offset
-    
-
-    # reset object
-    if isinstance(object_asset.cfg.spawn, sim_utils.CylinderCfg):
-            object_z_up = object_asset.cfg.spawn.height / 2
-    object_pos_world[:, 2] += object_z_up # z offset
-    object_asset.write_root_link_pose_to_sim(torch.cat([object_pos_world, object_asset.data.default_root_state[env_ids, 3:7]], dim=-1), env_ids=env_ids)
-    object_asset.write_root_com_velocity_to_sim(torch.zeros((len(env_ids), 6), device=env.device), env_ids=env_ids)

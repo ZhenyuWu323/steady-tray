@@ -1,4 +1,3 @@
-import isaaclab.envs.mdp as mdp
 from isaaclab.managers import EventTermCfg as EventTerm
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.utils import configclass
@@ -6,7 +5,7 @@ from steady_tray import mdp
 
 
 @configclass
-class HumanoidEventCfg:
+class G1RobotEventCfg:
     """Configuration for events."""
 
     # startup
@@ -79,33 +78,16 @@ class HumanoidEventCfg:
 
 
 
-
-
-
-
 @configclass
-class CircleTrayEventCfg(HumanoidEventCfg):
+class G1RobotPlateEventCfg(G1RobotEventCfg):
     """Configuration for events."""
 
-    
     # startup
     plate_material = EventTerm(
         func=mdp.randomize_rigid_body_material,
         mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("plate", body_names=".*"),
-            "static_friction_range": (0.3, 1.0),
-            "dynamic_friction_range": (0.3, 1.0),
-            "restitution_range": (0.0, 0.0),
-            "num_buckets": 64,
-        },
-    )
-
-    object_physics_material = EventTerm(
-        func=mdp.randomize_rigid_body_material,
-        mode="startup",
-        params={
-            "asset_cfg": SceneEntityCfg("object", body_names=".*"),
             "static_friction_range": (0.3, 1.0),
             "dynamic_friction_range": (0.3, 1.0),
             "restitution_range": (0.0, 0.0),
@@ -123,6 +105,39 @@ class CircleTrayEventCfg(HumanoidEventCfg):
         },
     )
 
+    # reset
+    reset_plate = EventTerm(
+        func=mdp.reset_plate_object_state,
+        mode="reset",
+        params={
+            "robot_asset_cfg": SceneEntityCfg("robot", body_names="pelvis"),
+            "plate_asset_cfg": SceneEntityCfg("plate"),
+            "plate_offset": [0.34058, 0.0, 0.14185],
+            "plate_xy_rand_radius": 0.01,
+        },
+    )
+
+
+
+
+
+@configclass
+class G1RobotObjectEventCfg(G1RobotPlateEventCfg):
+    """Configuration for events."""
+
+    # startup
+    object_physics_material = EventTerm(
+        func=mdp.randomize_rigid_body_material,
+        mode="startup",
+        params={
+            "asset_cfg": SceneEntityCfg("object", body_names=".*"),
+            "static_friction_range": (0.3, 1.0),
+            "dynamic_friction_range": (0.3, 1.0),
+            "restitution_range": (0.0, 0.0),
+            "num_buckets": 64,
+        },
+    )
+
     add_object_mass = EventTerm(
         func=mdp.randomize_rigid_body_mass,
         mode="startup",
@@ -133,9 +148,8 @@ class CircleTrayEventCfg(HumanoidEventCfg):
         },
     )
 
-
     set_object_com = EventTerm(
-        func=mdp.randomize_rigid_body_com_fixed,
+        func=mdp.randomize_object_com,
         mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("object", body_names=".*"),
@@ -144,12 +158,17 @@ class CircleTrayEventCfg(HumanoidEventCfg):
     )
 
 
+    # reset
     reset_object = EventTerm(
-        func=mdp.reset_plate_state,
+        func=mdp.reset_plate_object_state,
         mode="reset",
         params={
-            "robot_asset_cfg": SceneEntityCfg("robot", body_names="plate"),
+            "robot_asset_cfg": SceneEntityCfg("robot", body_names="pelvis"),
+            "plate_asset_cfg": SceneEntityCfg("plate"),
             "object_asset_cfg": SceneEntityCfg("object"),
-            "random_position_radius": 0,
+            "plate_offset": [0.34058, 0.0, 0.14185],
+            "plate_xy_rand_radius": 0.01,
+            "object_xy_rand_radius": 0.09,
+            "object_z_up": 0.1,
         },
     )

@@ -93,7 +93,7 @@ from isaaclab_tasks.utils import get_checkpoint_path
 from isaaclab_tasks.utils.hydra import hydra_task_config
 from joint_policy import JointOnPolicyRunner, JointRslRlVecEnvWrapper
 
-import steady_tray.tasks  # noqa: F401
+import steady_tray  # noqa: F401
 
 torch.backends.cuda.matmul.allow_tf32 = True
 torch.backends.cudnn.allow_tf32 = True

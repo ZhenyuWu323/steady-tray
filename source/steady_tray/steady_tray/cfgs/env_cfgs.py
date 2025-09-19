@@ -1,30 +1,19 @@
 from dataclasses import MISSING
-import math
-import isaaclab.envs.mdp as mdp
 import isaaclab.sim as sim_utils
-from isaaclab.assets import ArticulationCfg, AssetBaseCfg, RigidObjectCfg
+from isaaclab.assets import ArticulationCfg, RigidObjectCfg
 from isaaclab.envs import DirectRLEnvCfg
-from isaaclab.managers import EventTermCfg as EventTerm
-from isaaclab.managers import SceneEntityCfg
 from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.sensors import ContactSensorCfg, RayCasterCfg, patterns
 from isaaclab.sim import SimulationCfg, PhysxCfg
 from isaaclab.terrains import TerrainImporterCfg
 from isaaclab.utils import configclass
-from isaaclab.terrains.config.rough import ROUGH_TERRAINS_CFG  # isort: skip
 from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR, ISAACLAB_NUCLEUS_DIR
-from . import mdp
 from steady_tray.assets import G1_CFG
-from isaaclab.utils.noise import GaussianNoiseCfg, NoiseModelCfg, UniformNoiseCfg
 from isaaclab.envs.common import ViewerCfg
-from isaaclab.managers import ObservationGroupCfg as ObsGroup
-from isaaclab.managers import ObservationTermCfg as ObsTerm
-from isaaclab.utils.noise import AdditiveUniformNoiseCfg as Unoise
 import isaaclab.terrains as terrain_gen
-from steady_tray.cfgs import CircleTrayEventCfg, CommandsCfg, JointLocomotionObservationsCfg, JointActionsCfg
 
 @configclass
-class G1RobotSceneCfg:
+class G1RobotSceneCfg(DirectRLEnvCfg):
 
     # simulation configuration
     episode_length_s = 20.0
@@ -41,6 +30,13 @@ class G1RobotSceneCfg:
         physx=PhysxCfg(
             gpu_max_rigid_patch_count = 10 * 2**15
         ),
+    )
+
+    viewer: ViewerCfg = ViewerCfg(
+        origin_type="asset_root",
+        asset_name="robot",
+        eye=[2.5, -2.0, 1.8],
+        lookat=[0.0, 0.0, 0.0],
     )
 
 
@@ -96,7 +92,7 @@ class G1RobotSceneCfg:
     height_scanner: RayCasterCfg = RayCasterCfg(
         prim_path="/World/envs/env_.*/Robot/torso_link",
         offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 20.0)),
-        attach_yaw_only=True,
+        ray_alignment="yaw",
         pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[1.6, 1.0]),
         debug_vis=False,
         mesh_prim_paths=["/World/ground"],
@@ -197,22 +193,25 @@ class G1RobotSceneCfg:
 
 
     # observation space
-    observation_space = MISSING
+    observation_space: dict[str, int] = MISSING
     # action dim
-    action_dim = MISSING
+    action_dim: dict[str, int] = MISSING
+
+    # body keys
+    body_keys: list[str] = MISSING
 
 
     # events
-    events = MISSING
+    events: object = MISSING
 
     # command
-    commands = MISSING
+    commands: object = MISSING
 
     # actions
-    actions = MISSING
+    actions: object | None = None
 
     # observations
-    observations = MISSING
+    observations: object = MISSING
 
 
 

@@ -95,7 +95,7 @@ from isaaclab_tasks.utils.hydra import hydra_task_config
 from residual_policy import ResidualVecEnvWrapper, ResidualDistillRunner, ResidualOnPolicyRunner
 
 
-import steady_tray.tasks  # noqa: F401
+import steady_tray # noqa: F401
 
 torch.backends.cuda.matmul.allow_tf32 = True
 torch.backends.cudnn.allow_tf32 = True

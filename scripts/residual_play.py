@@ -75,7 +75,7 @@ from isaaclab_rl.rsl_rl import RslRlOnPolicyRunnerCfg, RslRlVecEnvWrapper, expor
 import isaaclab_tasks  # noqa: F401
 from isaaclab_tasks.utils import get_checkpoint_path, parse_env_cfg
 
-import steady_tray.tasks  # noqa: F401
+import steady_tray  # noqa: F401
 from residual_policy import ResidualVecEnvWrapper, ResidualDistillRunner, ResidualOnPolicyRunner
 
 
