@@ -28,7 +28,21 @@ parser.add_argument(
     action="store_true",
     help="Use the pre-trained checkpoint from Nucleus.",
 )
+parser.add_argument(
+    "--renderer",
+    type=str,
+    default="PathTracing",
+    choices=["RayTracedLighting", "PathTracing"],
+    help="Renderer to use.",
+)
+parser.add_argument(
+    "--samples_per_pixel_per_frame",
+    type=int,
+    default=1,
+    help="Number of samples per pixel per frame.",
+)
 parser.add_argument("--real-time", action="store_true", default=False, help="Run in real-time, if possible.")
+parser.add_argument("--distillation", action="store_true", default=False, help="Run distillation training.")
 # append RSL-RL cli arguments
 cli_args.add_rsl_rl_args(parser)
 # append AppLauncher cli args
@@ -62,9 +76,17 @@ import isaaclab_tasks  # noqa: F401
 from isaaclab_tasks.utils import get_checkpoint_path, parse_env_cfg
 
 import steady_tray.tasks  # noqa: F401
+from residual_policy import ResidualVecEnvWrapper, ResidualDistillRunner, ResidualOnPolicyRunner
 
 
 def main():
+
+
+    """
+    Use CMD: python joint_play.py --task=Template-G1-Plate-Decoupled-Direct-v0 --num_envs=2 --load_run=2025-07-06_10-40-06
+    """
+
+
     """Play with RSL-RL agent."""
     # parse configuration
     env_cfg = parse_env_cfg(
@@ -84,6 +106,7 @@ def main():
     elif args_cli.checkpoint:
         resume_path = retrieve_file_path(args_cli.checkpoint)
     else:
+        print(f"[INFO] Loading checkpoint from: {log_root_path}/{agent_cfg.load_run}/{agent_cfg.load_checkpoint}")
         resume_path = get_checkpoint_path(log_root_path, agent_cfg.load_run, agent_cfg.load_checkpoint)
 
     log_dir = os.path.dirname(resume_path)
@@ -108,31 +131,18 @@ def main():
         env = gym.wrappers.RecordVideo(env, **video_kwargs)
 
     # wrap around environment for rsl-rl
-    env = RslRlVecEnvWrapper(env, clip_actions=agent_cfg.clip_actions)
+    env = ResidualVecEnvWrapper(env, clip_actions=agent_cfg.clip_actions)
 
     print(f"[INFO]: Loading model checkpoint from: {resume_path}")
     # load previously trained model
-    ppo_runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=None, device=agent_cfg.device)
+    if args_cli.distillation:
+        ppo_runner = ResidualDistillRunner(env, agent_cfg.to_dict(), log_dir=None, device=agent_cfg.device)
+    else:
+        ppo_runner = ResidualOnPolicyRunner(env, agent_cfg.to_dict(), log_dir=None, device=agent_cfg.device)
     ppo_runner.load(resume_path)
 
     # obtain the trained policy for inference
     policy = ppo_runner.get_inference_policy(device=env.unwrapped.device)
-
-    # extract the neural network module
-    # we do this in a try-except to maintain backwards compatibility.
-    try:
-        # version 2.3 onwards
-        policy_nn = ppo_runner.alg.policy
-    except AttributeError:
-        # version 2.2 and below
-        policy_nn = ppo_runner.alg.actor_critic
-
-    # export policy to onnx/jit
-    export_model_dir = os.path.join(os.path.dirname(resume_path), "exported")
-    export_policy_as_jit(policy_nn, ppo_runner.obs_normalizer, path=export_model_dir, filename="policy.pt")
-    export_policy_as_onnx(
-        policy_nn, normalizer=ppo_runner.obs_normalizer, path=export_model_dir, filename="policy.onnx"
-    )
 
     dt = env.unwrapped.step_dt
 
@@ -145,7 +155,12 @@ def main():
         # run everything in inference mode
         with torch.inference_mode():
             # agent stepping
-            actions = policy(obs)
+            if args_cli.distillation:
+                actor_obs, critic_obs, residual_student_obs, residual_teacher_obs = obs["actor_obs"], obs["critic_obs"], obs["residual_student_obs"], obs["residual_teacher_obs"]
+                actions = policy(actor_obs, residual_student_obs)
+            else:
+                actor_obs, critic_obs, residual_actor_obs, residual_critic_obs = obs["actor_obs"], obs["critic_obs"], obs["residual_actor_obs"], obs["residual_critic_obs"]
+                actions = policy(actor_obs,residual_actor_obs)
             # env stepping
             obs, _, _, _ = env.step(actions)
         if args_cli.video:
