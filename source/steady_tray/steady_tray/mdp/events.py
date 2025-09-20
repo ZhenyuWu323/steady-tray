@@ -9,7 +9,8 @@ from isaaclab.envs import DirectRLEnv, ManagerBasedEnv
 from pxr import Gf, Sdf, UsdGeom, Vt
 import omni
 import isaaclab.sim as sim_utils
-from isaaclab.utils.math import quat_apply, quat_from_euler_xyz
+from isaaclab.utils.math import quat_apply, quat_from_euler_xyz, quat_mul
+from steady_tray.assets import PLATE_OFFSET
 _all_forces = torch.tensor([])
 
 def randomize_cylinder_scale(
@@ -389,8 +390,8 @@ def reset_plate_object_state(
     robot_asset_cfg: SceneEntityCfg = SceneEntityCfg("robot", body_names="pelvis"),
     plate_asset_cfg: SceneEntityCfg = SceneEntityCfg("plate"),
     object_asset_cfg: Optional[SceneEntityCfg] = None,
-    plate_offset: list[float] = [0.34058, 0.0, 0.14185],
-    plate_xy_rand_radius: float = 0.01,
+    plate_offset: list[float] = PLATE_OFFSET,
+    plate_xy_rand_radius: float = 0.00,
     object_xy_rand_radius: float = 0.08,
     object_z_up: float = 0.1,
 ):
@@ -415,7 +416,8 @@ def reset_plate_object_state(
         plate_pos_world[:, 1] += random_radius * torch.sin(random_angle)
 
     # reset plate
-    plate_asset.write_root_link_pose_to_sim(torch.cat([plate_pos_world, plate_asset.data.default_root_state[env_ids, 3:7]], dim=-1), env_ids=env_ids)
+    plate_orientation = reference_frame_states[:, 3:7]
+    plate_asset.write_root_link_pose_to_sim(torch.cat([plate_pos_world, plate_orientation], dim=-1), env_ids=env_ids)
     plate_asset.write_root_com_velocity_to_sim(torch.zeros((len(env_ids), 6), device=env.device), env_ids=env_ids)
 
 
@@ -445,5 +447,6 @@ def reset_plate_object_state(
             torch.zeros_like(random_yaw), 
             random_yaw
         )
-        object_asset.write_root_link_pose_to_sim(torch.cat([object_pos_world, object_quat], dim=-1), env_ids=env_ids)
+        object_orientation = quat_mul(plate_orientation, object_quat)
+        object_asset.write_root_link_pose_to_sim(torch.cat([object_pos_world, object_orientation], dim=-1), env_ids=env_ids)
         object_asset.write_root_com_velocity_to_sim(torch.zeros((len(env_ids), 6), device=env.device), env_ids=env_ids)

@@ -16,7 +16,7 @@ class UnitreeArticulationCfg(ArticulationCfg):
 
 G1_HOOK_TRAY_CFG = UnitreeArticulationCfg(
     spawn=sim_utils.UsdFileCfg(
-        usd_path=f"{ASSETS_DATA_DIR}/g1_slide_tray_holder.usd",
+        usd_path=f"{ASSETS_DATA_DIR}/g1_side_tray_holder.usd",
         activate_contact_sensors=True,
         rigid_props=sim_utils.RigidBodyPropertiesCfg(
             disable_gravity=False,

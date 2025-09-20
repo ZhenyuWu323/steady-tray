@@ -1,7 +1,7 @@
 from isaaclab.assets import ArticulationCfg
 from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.utils import configclass
-from steady_tray.assets import G1_CIRCLE_TRAY_CFG
+from steady_tray.assets import G1_CIRCLE_TRAY_CFG, G1_HOOK_TRAY_CFG
 from steady_tray.cfgs import G1RobotPlateEventCfg, CommandsCfg, JointLocomotionObservationsCfg, JointActionsCfg, G1RobotPlateSceneCfg
 
 
@@ -35,7 +35,7 @@ class G1JointLocomotionEnvCfg(G1RobotPlateSceneCfg):
 
 
     # robot configuration
-    robot: ArticulationCfg = G1_CIRCLE_TRAY_CFG.replace(prim_path="/World/envs/env_.*/Robot")
+    robot: ArticulationCfg = G1_HOOK_TRAY_CFG.replace(prim_path="/World/envs/env_.*/Robot")
     tray_holder_name = ['left_tray_holder_link', 'right_tray_holder_link']
     
 

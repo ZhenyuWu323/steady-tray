@@ -2,7 +2,7 @@ from isaaclab.managers import EventTermCfg as EventTerm
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.utils import configclass
 from steady_tray import mdp
-
+from steady_tray.assets import PLATE_OFFSET
 
 @configclass
 class G1RobotEventCfg:
@@ -112,8 +112,8 @@ class G1RobotPlateEventCfg(G1RobotEventCfg):
         params={
             "robot_asset_cfg": SceneEntityCfg("robot", body_names="pelvis"),
             "plate_asset_cfg": SceneEntityCfg("plate"),
-            "plate_offset": [0.34058, 0.0, 0.14185],
-            "plate_xy_rand_radius": 0.01,
+            "plate_offset": PLATE_OFFSET,
+            "plate_xy_rand_radius": 0.00,
         },
     )
 
@@ -166,8 +166,8 @@ class G1RobotObjectEventCfg(G1RobotPlateEventCfg):
             "robot_asset_cfg": SceneEntityCfg("robot", body_names="pelvis"),
             "plate_asset_cfg": SceneEntityCfg("plate"),
             "object_asset_cfg": SceneEntityCfg("object"),
-            "plate_offset": [0.34058, 0.0, 0.14185],
-            "plate_xy_rand_radius": 0.01,
+            "plate_offset": PLATE_OFFSET,
+            "plate_xy_rand_radius": 0.00,
             "object_xy_rand_radius": 0.09,
             "object_z_up": 0.1,
         },

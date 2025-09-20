@@ -9,6 +9,7 @@ from isaaclab.terrains import TerrainImporterCfg
 from isaaclab.utils import configclass
 from isaaclab.utils.assets import ISAAC_NUCLEUS_DIR, ISAACLAB_NUCLEUS_DIR
 from steady_tray.assets import G1_CFG
+from steady_tray.assets import ASSETS_DATA_DIR, PLATE_OFFSET
 from isaaclab.envs.common import ViewerCfg
 import isaaclab.terrains as terrain_gen
 
@@ -220,16 +221,15 @@ class G1RobotSceneCfg(DirectRLEnvCfg):
 class G1RobotPlateSceneCfg(G1RobotSceneCfg):
 
     # plate configuration
-    plate_offset = [0.34058, 0.0, 0.14185] # x, y, z offset from pelvis
+    plate_offset = PLATE_OFFSET # x, y, z offset from pelvis
     plate_cfg = RigidObjectCfg(
         prim_path="/World/envs/env_.*/Plate",
-        spawn=sim_utils.CylinderCfg(
-            radius=0.18,
-            height=0.01,
+        spawn=sim_utils.UsdFileCfg(
+            usd_path=f"{ASSETS_DATA_DIR}/tray.usd",
+            activate_contact_sensors=True,
             rigid_props=sim_utils.RigidBodyPropertiesCfg(),
             mass_props=sim_utils.MassPropertiesCfg(mass=0.1),
             collision_props=sim_utils.CollisionPropertiesCfg(),
-            activate_contact_sensors=True,
         ),
         init_state=RigidObjectCfg.InitialStateCfg(),
     )

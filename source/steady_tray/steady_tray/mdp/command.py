@@ -15,6 +15,7 @@ from isaaclab.utils.math import quat_apply
 from isaaclab.markers import VisualizationMarkersCfg
 from isaaclab.markers.config import FRAME_MARKER_CFG
 from isaaclab.markers import VisualizationMarkers
+from steady_tray.assets import PLATE_OFFSET
 
 """
 Velocity Command
@@ -202,7 +203,7 @@ class PlatePoseCommandCfg(CommandTermCfg):
     plate_asset_name: str = MISSING
     """Name of the asset in the environment for which the commands are generated."""
 
-    default_pose: list[float] = [0.34058, 0.0, 0.14185]
+    default_pose: list[float] = PLATE_OFFSET
     """Default pose for the plate pose command."""
 
     @configclass

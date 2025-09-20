@@ -1,7 +1,7 @@
 from isaaclab.utils import configclass
 from steady_tray import mdp
 from .env_cfgs import G1RobotObjectSceneCfg
-robot_cfg = G1RobotObjectSceneCfg()
+from steady_tray.assets import PLATE_OFFSET
 
 
 
@@ -25,7 +25,7 @@ class CommandsCfg:
         robot_asset_name="robot",
         body_name="pelvis",
         plate_asset_name="plate",
-        default_pose=robot_cfg.plate_offset,
+        default_pose=PLATE_OFFSET,
         ranges=mdp.PlatePoseCommandCfg.Ranges(
             offset_x=(0, 0),
             offset_y=(-0.25, 0.25),
