@@ -238,6 +238,7 @@ class G1RobotPlateSceneCfg(G1RobotSceneCfg):
         update_period=0.005, 
         track_air_time=True,
         history_length=3,
+        filter_prim_paths_expr=["/World/envs/env_.*/Robot/left_tray_holder_link", "/World/envs/env_.*/Robot/right_tray_holder_link"],
     )
 
 
@@ -262,7 +263,7 @@ class G1RobotObjectSceneCfg(G1RobotPlateSceneCfg):
         update_period=0.005, 
         track_pose=True,
         track_air_time=False,
-        filter_prim_paths_expr=["/World/envs/env_.*/Robot/plate"],
+        filter_prim_paths_expr=["/World/envs/env_.*/Plate"],
         history_length=3,
     )
 

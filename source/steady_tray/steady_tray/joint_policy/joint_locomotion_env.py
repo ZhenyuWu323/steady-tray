@@ -34,7 +34,7 @@ class G1JointLocomotionEnv(DirectRLEnv):
         self.knee_indexes = self.robot.find_joints(self.cfg.hips_names[-1])[0]
         self.hips_indexes = self.robot.find_joints(self.cfg.hips_names)[0]
         self.lower_body_indexes = self.waist_indexes + self.hips_indexes + self.feet_indexes # lower body
-        self.pelvis_indexes = self.robot.find_bodies(self.cfg.pelvis_names)[0]
+        self.pelvis_indexes = self.robot.find_bodies(self.cfg.pelvis_names)[0][0]
 
         # body/link indexes
         self.feet_body_indexes = self.robot.find_bodies(self.cfg.feet_body_name)[0]

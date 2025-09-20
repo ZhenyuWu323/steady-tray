@@ -301,3 +301,8 @@ def object_orienation_in_apriltag_frame(env: ManagerBasedEnv):
     transform = env.object_in_camera_frame
     quat_in_camera_frame = transform.data.target_quat_source[:, 0, :]
     return quat_in_camera_frame 
+
+
+def plate_position_offset(env: ManagerBasedRLEnv, command_name: str = "plate_pose") -> torch.Tensor:
+    command_term = env.command_manager.get_term(command_name)
+    return command_term.offset

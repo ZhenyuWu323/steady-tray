@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING, List, Sequence
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.sensors import ContactSensor, RayCaster
 from isaaclab.utils.math import quat_apply_inverse, yaw_quat, quat_box_minus, quat_error_magnitude
+from isaaclab.assets import Articulation, RigidObject
 
 if TYPE_CHECKING:
     from isaaclab.envs import ManagerBasedRLEnv, DirectRLEnv
@@ -555,3 +556,53 @@ def joint_effort_l2(joint_effort: torch.Tensor, joint_idx: Sequence[int], weight
 def plate_force_xy_l1(plate_wrench: torch.Tensor, weight: float) -> torch.Tensor:
     """Penalize plate force in xy plane using L1 kernel."""
     return torch.sum(torch.abs(plate_wrench[:, :2]), dim=1) * weight
+
+
+
+def plate_tray_holder_in_contact(plate_contact_sensor: ContactSensor, force_threshold: float = 0.01) -> torch.Tensor:
+    """Reward plate tray holder contact."""
+    contact_force = plate_contact_sensor.data.force_matrix_w
+    fz = contact_force[:, 0, :, 2]
+    is_holding_plate = torch.all(fz >= force_threshold, dim=1)
+    return is_holding_plate.float()
+
+
+def track_plate_pose_exp(
+    plate_pos_w: torch.Tensor,
+    pelvis_pos_w: torch.Tensor,
+    pelvis_quat_w: torch.Tensor,
+    target_plate_pos_pelvis: torch.Tensor, 
+    weight: float,
+    sigma: float = 0.05
+) -> torch.Tensor:
+    """Reward plate pose deviation."""
+    # transform plate pose to pelvis frame
+    plate_pos_pelvis = quat_apply_inverse(pelvis_quat_w, plate_pos_w - pelvis_pos_w)
+    plate_pos_error = torch.sum(torch.square(plate_pos_pelvis - target_plate_pos_pelvis), dim=1)
+    return torch.exp(-plate_pos_error / sigma) * weight
+
+
+def penalty_plate_lin_vel_robot_frame(
+    robot_quat_w: torch.Tensor, 
+    plate_lin_vel_w: torch.Tensor, 
+    robot_lin_vel_w: torch.Tensor,
+    weight: float
+) -> torch.Tensor:
+
+    lin_vel_in_robot_frame = quat_apply_inverse(robot_quat_w, plate_lin_vel_w - robot_lin_vel_w)
+    return torch.sum(torch.square(lin_vel_in_robot_frame), dim=1) * weight
+
+
+def penalty_plate_ang_vel_robot_frame(
+    robot_quat_w: torch.Tensor,
+    plate_ang_vel_w: torch.Tensor,
+    robot_ang_vel_w: torch.Tensor,
+    weight: float
+) -> torch.Tensor:
+    ang_vel_in_robot_frame = quat_apply_inverse(robot_quat_w, plate_ang_vel_w - robot_ang_vel_w)
+    return torch.sum(torch.square(ang_vel_in_robot_frame), dim=1) * weight
+
+
+
+
+

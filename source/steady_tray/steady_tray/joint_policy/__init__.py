@@ -15,3 +15,16 @@ gym.register(
         "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:G1JointRunnerCfg",
     },
 )
+
+
+
+
+gym.register(
+    id="G1-Joint-Plate-Balance",
+    entry_point=f"{__name__}.joint_plate_balance_env:G1JointPlateBalanceEnv",
+    disable_env_checker=True,
+    kwargs={
+        "env_cfg_entry_point": f"{__name__}.joint_plate_balance_cfg:G1JointPlateBalanceEnvCfg",
+        "rsl_rl_cfg_entry_point": f"{agents.__name__}.rsl_rl_ppo_cfg:G1JointPlateBalanceRunnerCfg",
+    },
+)

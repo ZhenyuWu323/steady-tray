@@ -100,7 +100,7 @@ class G1RobotPlateEventCfg(G1RobotEventCfg):
         mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("plate", body_names=".*"),
-            "mass_distribution_params": (0.3, 1.5),
+            "mass_distribution_params": (0.5, 1.0),
             "operation": "abs",
         },
     )

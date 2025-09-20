@@ -48,3 +48,10 @@ class G1JointRunnerCfg(RslRlOnPolicyRunnerCfg):
         max_grad_norm=1.0,
     )
 
+
+
+
+@configclass
+class G1JointPlateBalanceRunnerCfg(G1JointRunnerCfg):
+    experiment_name = "g1_joint_plate_balance"
+    

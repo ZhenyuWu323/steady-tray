@@ -1,6 +1,7 @@
 from isaaclab.utils import configclass
 from steady_tray import mdp
-
+from .env_cfgs import G1RobotObjectSceneCfg
+robot_cfg = G1RobotObjectSceneCfg()
 
 
 
@@ -18,4 +19,18 @@ class CommandsCfg:
         ranges=mdp.UniformVelocityCommandCfg.Ranges(
             lin_vel_x=(-0.5, 1.0), lin_vel_y=(-0.3, 0.3), ang_vel_z=(-0.2, 0.2)
         ),
+    )
+
+    plate_pose = mdp.PlatePoseCommandCfg(
+        robot_asset_name="robot",
+        body_name="pelvis",
+        plate_asset_name="plate",
+        default_pose=robot_cfg.plate_offset,
+        ranges=mdp.PlatePoseCommandCfg.Ranges(
+            offset_x=(0, 0),
+            offset_y=(-0.25, 0.25),
+            offset_z=(0,0),
+        ),
+        resampling_time_range=(5, 5),
+        debug_vis=True,
     )
