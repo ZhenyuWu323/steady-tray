@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, List, Sequence
 
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.sensors import ContactSensor, RayCaster
-from isaaclab.utils.math import quat_apply_inverse, yaw_quat, quat_box_minus, quat_error_magnitude
+from isaaclab.utils.math import quat_apply_inverse, yaw_quat, quat_box_minus, quat_error_magnitude, wrap_to_pi, euler_xyz_from_quat
 from isaaclab.assets import Articulation, RigidObject
 
 if TYPE_CHECKING:
@@ -603,6 +603,22 @@ def penalty_plate_ang_vel_robot_frame(
     return torch.sum(torch.square(ang_vel_in_robot_frame), dim=1) * weight
 
 
+def penalty_body_roll_pitch_l2(
+    body_root_quat_w: torch.Tensor,
+    weight: float
+) -> torch.Tensor:
+    """Penalize body roll and pitch using L2 squared kernel."""
+    body_euler_roll, body_euler_pitch, _ = euler_xyz_from_quat(body_root_quat_w)
+    
+    return (body_euler_roll**2 + body_euler_pitch**2) * weight
 
 
-
+def penalty_force_l2(
+    plate_contact_sensor: ContactSensor,
+    weight: float
+) -> torch.Tensor:
+    """Penalize excessive EE-plate force using L2 squared."""
+    contact_force = plate_contact_sensor.data.force_matrix_w[:, 0, :, :]
+    force_l2_per_hand = torch.sum(contact_force ** 2, dim=2)
+    return torch.sum(force_l2_per_hand, dim=1) * weight
+    

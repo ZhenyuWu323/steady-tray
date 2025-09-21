@@ -28,7 +28,7 @@ class CommandsCfg:
         default_pose=PLATE_OFFSET,
         ranges=mdp.PlatePoseCommandCfg.Ranges(
             offset_x=(0, 0),
-            offset_y=(-0.25, 0.25),
+            offset_y=(-0.2, 0.2),
             offset_z=(0,0),
         ),
         resampling_time_range=(5, 5),

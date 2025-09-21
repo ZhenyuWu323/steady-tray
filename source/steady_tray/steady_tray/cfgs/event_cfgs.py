@@ -83,6 +83,17 @@ class G1RobotPlateEventCfg(G1RobotEventCfg):
     """Configuration for events."""
 
     # startup
+    add_tray_holder_mass = EventTerm(
+        func=mdp.randomize_rigid_body_mass,
+        mode="startup",
+        params={
+            "asset_cfg": SceneEntityCfg("robot", body_names=".*_tray_holder_.*"),
+            "mass_distribution_params": (0.5, 1.0),
+            "operation": "abs",
+        },
+    )
+
+
     plate_material = EventTerm(
         func=mdp.randomize_rigid_body_material,
         mode="startup",

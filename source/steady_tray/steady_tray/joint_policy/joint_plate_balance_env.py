@@ -6,7 +6,7 @@ import torch
 
 from isaaclab.assets import Articulation, RigidObject
 from isaaclab.envs import DirectRLEnv
-from isaaclab.sensors import ContactSensor, RayCaster
+from isaaclab.sensors import ContactSensor, RayCaster, FrameTransformer
 from .joint_plate_balance_cfg import G1JointPlateBalanceEnvCfg
 from steady_tray import mdp
 from isaaclab.envs.common import VecEnvStepReturn
@@ -26,6 +26,8 @@ class G1JointPlateBalanceEnv(G1JointLocomotionEnv):
         self._episode_sums['tracking_plate_pos'] = torch.zeros(self.num_envs, device=self.device)
         self._episode_sums['penalty_plate_lin_vel_robot_frame'] = torch.zeros(self.num_envs, device=self.device)
         self._episode_sums['penalty_plate_ang_vel_robot_frame'] = torch.zeros(self.num_envs, device=self.device)
+        self._episode_sums['penalty_plate_roll_pitch'] = torch.zeros(self.num_envs, device=self.device)
+        self._episode_sums['penalty_force_l2'] = torch.zeros(self.num_envs, device=self.device)
         self._episode_sums['penalty_plate_projected_gravity'] = torch.zeros(self.num_envs, device=self.device)
 
     def _setup_scene(self):
@@ -46,8 +48,10 @@ class G1JointPlateBalanceEnv(G1JointLocomotionEnv):
         # plate tray holder in contact
         plate_tray_holder_in_contact = mdp.plate_tray_holder_in_contact(
             plate_contact_sensor=self._plate_contact_sensor,
-            force_threshold=0.01,
+            force_threshold=0.05,
         )
+
+        reward_plate_tray_holder_in_contact = 0.15 * plate_tray_holder_in_contact
 
 
         # plate pose tracking
@@ -56,7 +60,7 @@ class G1JointPlateBalanceEnv(G1JointLocomotionEnv):
             pelvis_pos_w=self.robot.data.body_pos_w[:, self.pelvis_indexes, :],
             pelvis_quat_w=self.robot.data.body_quat_w[:, self.pelvis_indexes, :],
             target_plate_pos_pelvis=self.command_manager.get_command("plate_pose"),
-            weight=0.0 * plate_tray_holder_in_contact,
+            weight=5.0 * plate_tray_holder_in_contact,
             sigma=0.05,
         )
 
@@ -79,25 +83,41 @@ class G1JointPlateBalanceEnv(G1JointLocomotionEnv):
         # plate projected gravity
         penalty_plate_projected_gravity = mdp.flat_orientation_l2(
             projected_gravity_b=self._plate.data.projected_gravity_b,
-            weight=-0.5 * plate_tray_holder_in_contact,
+            weight=-5.0 * plate_tray_holder_in_contact,
         )
 
-        plate_tray_holder_in_contact *= 5.0
+        penalty_body_roll_pitch_l2 = mdp.penalty_body_roll_pitch_l2(
+            body_root_quat_w=self._plate.data.root_quat_w,
+            weight=-0.0 * plate_tray_holder_in_contact,
+        )
+
+        
+        # plate force l2
+        penalty_force_l2 = mdp.penalty_force_l2(
+            plate_contact_sensor=self._plate_contact_sensor,
+            weight=-0.001 * plate_tray_holder_in_contact,
+        )
+
+        
 
         plate_balance_reward = (
-            plate_tray_holder_in_contact +
+            reward_plate_tray_holder_in_contact +
             tracking_plate_pos + 
             penalty_plate_lin_vel_robot_frame + 
             penalty_plate_ang_vel_robot_frame + 
-            penalty_plate_projected_gravity)
+            penalty_body_roll_pitch_l2 +
+            penalty_plate_projected_gravity +
+            penalty_force_l2)
         plate_balance_reward *= self.step_dt
         rewards['upper_body'] += plate_balance_reward
         
-        self._episode_sums['plate_tray_holder_in_contact'] += plate_tray_holder_in_contact
+        self._episode_sums['plate_tray_holder_in_contact'] += reward_plate_tray_holder_in_contact
         self._episode_sums['tracking_plate_pos'] += tracking_plate_pos
         self._episode_sums['penalty_plate_lin_vel_robot_frame'] += penalty_plate_lin_vel_robot_frame
         self._episode_sums['penalty_plate_ang_vel_robot_frame'] += penalty_plate_ang_vel_robot_frame
+        self._episode_sums['penalty_plate_roll_pitch'] += penalty_body_roll_pitch_l2
         self._episode_sums['penalty_plate_projected_gravity'] += penalty_plate_projected_gravity
+        self._episode_sums['penalty_force_l2'] += penalty_force_l2
 
         return rewards
       

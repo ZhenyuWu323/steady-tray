@@ -11,7 +11,7 @@ from isaaclab.utils.noise import AdditiveUniformNoiseCfg as Unoise
 from steady_tray.utils import *
 from isaaclab.managers import SceneEntityCfg
 from .joint_locomotion_cfg import G1JointLocomotionEnvCfg
-
+from isaaclab.sensors import FrameTransformerCfg
 
 @configclass
 class JointPlateBalanceObservationsCfg:

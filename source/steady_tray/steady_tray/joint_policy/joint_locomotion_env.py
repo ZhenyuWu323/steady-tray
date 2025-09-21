@@ -297,7 +297,7 @@ class G1JointLocomotionEnv(DirectRLEnv):
             joint_pos=self.robot.data.joint_pos,
             joint_idx=self.upper_body_indexes,
             joint_pos_command=self.default_upper_joint_pos,
-            weight=1.0,
+            weight=0.0,
             sigma=0.1,
         )
 
