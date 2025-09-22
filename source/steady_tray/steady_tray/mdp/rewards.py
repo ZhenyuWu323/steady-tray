@@ -622,3 +622,49 @@ def penalty_force_l2(
     force_l2_per_hand = torch.sum(contact_force ** 2, dim=2)
     return torch.sum(force_l2_per_hand, dim=1) * weight
     
+
+def track_plate_pose_l2(
+    plate_pos_w: torch.Tensor,
+    pelvis_pos_w: torch.Tensor,
+    pelvis_quat_w: torch.Tensor,
+    target_plate_pos_pelvis: torch.Tensor, 
+    weight: float,
+) -> torch.Tensor:
+    """Reward plate pose deviation."""
+    # transform plate pose to pelvis frame
+    plate_pos_pelvis = quat_apply_inverse(pelvis_quat_w, plate_pos_w - pelvis_pos_w)
+    plate_pos_error = torch.sum(torch.square(plate_pos_pelvis - target_plate_pos_pelvis), dim=1)
+    return plate_pos_error * weight
+
+def track_plate_pose_tanh(
+    plate_pos_w: torch.Tensor,
+    pelvis_pos_w: torch.Tensor,
+    pelvis_quat_w: torch.Tensor,
+    target_plate_pos_pelvis: torch.Tensor, 
+    weight: float,
+    std: float = 0.5
+) -> torch.Tensor:
+    """Reward plate pose deviation."""
+    # transform plate pose to pelvis frame
+    plate_pos_pelvis = quat_apply_inverse(pelvis_quat_w, plate_pos_w - pelvis_pos_w)
+    plate_pos_error = torch.sum(torch.square(plate_pos_pelvis - target_plate_pos_pelvis), dim=1)
+    return 1 - torch.tanh(plate_pos_error / std) * weight
+
+
+
+def penalty_pos_deviation_l2(
+    current_pos: torch.Tensor,
+    target_pos: torch.Tensor,
+    weight: float
+) -> torch.Tensor:
+    """Penalize position deviation from the default position."""
+    return torch.sum(torch.square(current_pos - target_pos), dim=1) * weight
+
+
+def penalty_quat_deviation(
+    current_quat: torch.Tensor,
+    target_quat: torch.Tensor,
+    weight: float
+) -> torch.Tensor:
+    """Penalize quaternion deviation from the default quaternion."""
+    return quat_error_magnitude(current_quat, target_quat) * weight

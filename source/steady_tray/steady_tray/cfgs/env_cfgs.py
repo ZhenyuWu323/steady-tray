@@ -29,7 +29,7 @@ class G1RobotSceneCfg(DirectRLEnvCfg):
             dynamic_friction=1.0,
         ),
         physx=PhysxCfg(
-            gpu_max_rigid_patch_count = 10 * 2**15
+            gpu_max_rigid_patch_count = 20 * 2**15
         ),
     )
 

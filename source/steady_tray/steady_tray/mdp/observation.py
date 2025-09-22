@@ -140,6 +140,27 @@ def plate_pose_robot_frame(env: ManagerBasedEnv, plate_asset_cfg: SceneEntityCfg
 
     return torch.cat([pos_in_robot_frame, quat_in_robot_frame], dim=-1)
 
+def plate_position_robot_frame(env: ManagerBasedEnv, plate_asset_cfg: SceneEntityCfg = SceneEntityCfg("plate"), robot_asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
+    # extract the used quantities (to enable type-hinting)
+    robot_asset: Articulation = env.scene[robot_asset_cfg.name]
+    plate_asset: RigidObject = env.scene[plate_asset_cfg.name]
+
+    robot_quat_w = robot_asset.data.root_quat_w
+    pos_in_robot_frame = quat_apply_inverse(robot_quat_w, plate_asset.data.root_pos_w - robot_asset.data.root_pos_w)
+
+    return pos_in_robot_frame
+
+
+def plate_orientation_robot_frame(env: ManagerBasedEnv, plate_asset_cfg: SceneEntityCfg = SceneEntityCfg("plate"), robot_asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
+    # extract the used quantities (to enable type-hinting)
+    robot_asset: Articulation = env.scene[robot_asset_cfg.name]
+    plate_asset: RigidObject = env.scene[plate_asset_cfg.name]
+
+    robot_quat_w = robot_asset.data.root_quat_w
+    quat_in_robot_frame = quat_mul(quat_inv(robot_quat_w), plate_asset.data.root_quat_w)
+
+    return quat_in_robot_frame
+
 
 def plate_twist_robot_frame(env: ManagerBasedEnv, plate_asset_cfg: SceneEntityCfg = SceneEntityCfg("plate"), robot_asset_cfg: SceneEntityCfg = SceneEntityCfg("robot")) -> torch.Tensor:
     # extract the used quantities (to enable type-hinting)

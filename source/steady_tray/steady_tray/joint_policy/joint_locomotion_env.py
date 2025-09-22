@@ -304,13 +304,6 @@ class G1JointLocomotionEnv(DirectRLEnv):
         """
         Upper Body Penalty Terms
         """
-        # upper body torques
-        penalty_upper_body_dof_torques = mdp.joint_torque_l2(
-            joint_torque=self.robot.data.applied_torque,
-            joint_idx=self.upper_body_indexes,
-            weight=0.0,
-        )
-
         # upper body accelerations
         penalty_upper_body_dof_acc = mdp.joint_accel_l2(
             joint_accel=self.robot.data.joint_acc,
@@ -365,7 +358,6 @@ class G1JointLocomotionEnv(DirectRLEnv):
 		# upper body reward
         upper_body_reward = (
             tracking_upper_body_dof_pos + 
-            penalty_upper_body_dof_torques + 
             penalty_upper_body_dof_acc + 
             penalty_upper_body_dof_pos_limits + 
             penalty_upper_body_action_rate + 

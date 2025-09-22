@@ -2,7 +2,7 @@ from isaaclab.assets import ArticulationCfg
 from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.utils import configclass
 from steady_tray.assets import G1_CIRCLE_TRAY_CFG, G1_HOOK_TRAY_CFG
-from steady_tray.cfgs import G1RobotPlateEventCfg, CommandsCfg, JointLocomotionObservationsCfg, JointActionsCfg, G1RobotPlateSceneCfg
+from steady_tray.cfgs import G1RobotPlateEventCfg, CommandsCfg, JointPolicyObservationsCfg, JointActionsCfg, G1RobotPlateSceneCfg
 
 
 
@@ -18,11 +18,11 @@ class G1JointLocomotionEnvCfg(G1RobotPlateSceneCfg):
     # NOTE: Remember to update these if any updates are made to env
     observation_space = {
         # upper body
-        "upper_body_actor_obs": 480,
-        "upper_body_critic_obs": 480 + 15,
+        "upper_body_actor_obs": 471,
+        "upper_body_critic_obs": 471 + 15,
         # lower body
-        "lower_body_actor_obs": 480,
-        "lower_body_critic_obs": 480 + 15,
+        "lower_body_actor_obs": 471,
+        "lower_body_critic_obs": 471 + 15,
     }
     action_dim= {
         "upper_body": 14,
@@ -49,7 +49,7 @@ class G1JointLocomotionEnvCfg(G1RobotPlateSceneCfg):
     actions: JointActionsCfg = JointActionsCfg()
 
     # observations
-    observations: JointLocomotionObservationsCfg = JointLocomotionObservationsCfg()
+    observations: JointPolicyObservationsCfg = JointPolicyObservationsCfg()
 
     # scene
     scene: InteractiveSceneCfg = InteractiveSceneCfg(num_envs=8192, env_spacing=2.5, replicate_physics=True)

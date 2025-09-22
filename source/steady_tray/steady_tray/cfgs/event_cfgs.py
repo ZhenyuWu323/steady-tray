@@ -13,7 +13,7 @@ class G1RobotEventCfg:
         func=mdp.randomize_rigid_body_material,
         mode="startup",
         params={
-            "asset_cfg": SceneEntityCfg("robot", body_names=".*"),
+            "asset_cfg": SceneEntityCfg("robot", body_names="^(?!.*holder).*$"),
             "static_friction_range": (0.3, 1.0),
             "dynamic_friction_range": (0.3, 1.0),
             "restitution_range": (0.0, 0.0),
@@ -83,6 +83,19 @@ class G1RobotPlateEventCfg(G1RobotEventCfg):
     """Configuration for events."""
 
     # startup
+    tray_holder_material = EventTerm(
+        func=mdp.randomize_rigid_body_material,
+        mode="startup",
+        params={
+            "asset_cfg": SceneEntityCfg("robot", body_names=".*_tray_holder_.*"),
+            "static_friction_range": (0.7, 1.0),
+            "dynamic_friction_range": (0.7, 1.0),
+            "restitution_range": (0.0, 0.0),
+            "num_buckets": 64,
+        },
+    )
+
+    # tray holder mass
     add_tray_holder_mass = EventTerm(
         func=mdp.randomize_rigid_body_mass,
         mode="startup",
@@ -99,8 +112,8 @@ class G1RobotPlateEventCfg(G1RobotEventCfg):
         mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("plate", body_names=".*"),
-            "static_friction_range": (0.3, 1.0),
-            "dynamic_friction_range": (0.3, 1.0),
+            "static_friction_range": (0.5, 1.0),
+            "dynamic_friction_range": (0.5, 1.0),
             "restitution_range": (0.0, 0.0),
             "num_buckets": 64,
         },
