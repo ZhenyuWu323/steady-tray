@@ -10,8 +10,8 @@ import torch.optim as optim
 
 # rsl-rl
 from rsl_rl.storage import RolloutStorage
-from policy.residual_student_teacher import ResidualStudentTeacher
-from distill_storage import DistillationRolloutStorage
+from ..policy.residual_student_teacher import ResidualStudentTeacher
+from .distill_storage import DistillationRolloutStorage
 
 
 class DistillationRunner:

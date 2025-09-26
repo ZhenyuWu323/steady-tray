@@ -3,7 +3,7 @@ import isaaclab.sim as sim_utils
 from isaaclab.assets import ArticulationCfg, RigidObjectCfg
 from isaaclab.envs import DirectRLEnvCfg
 from isaaclab.scene import InteractiveSceneCfg
-from isaaclab.sensors import ContactSensorCfg, RayCasterCfg, patterns
+from isaaclab.sensors import ContactSensorCfg, RayCasterCfg, patterns, FrameTransformerCfg
 from isaaclab.sim import SimulationCfg, PhysxCfg
 from isaaclab.terrains import TerrainImporterCfg
 from isaaclab.utils import configclass
@@ -243,6 +243,37 @@ class G1RobotPlateSceneCfg(G1RobotSceneCfg):
         filter_prim_paths_expr=["/World/envs/env_.*/Robot/left_tray_holder_link", "/World/envs/env_.*/Robot/right_tray_holder_link"],
     )
 
+    # tray holder transform
+    left_tray_holder_transform: FrameTransformerCfg = FrameTransformerCfg(
+        prim_path="/World/envs/env_.*/Robot/left_tray_holder_link",
+        #debug_vis=True,
+        target_frames=[
+            FrameTransformerCfg.FrameCfg(
+                prim_path="/World/envs/env_.*/Robot/right_tray_holder_link",
+                name="right_tray_holder",
+            ),
+            FrameTransformerCfg.FrameCfg(
+                prim_path="/World/envs/env_.*/Plate",
+                name="plate",
+            ),
+        ],
+    )
+
+    right_tray_holder_transform: FrameTransformerCfg = FrameTransformerCfg(
+        prim_path="/World/envs/env_.*/Robot/right_tray_holder_link",
+        #debug_vis=True,
+        target_frames=[
+            FrameTransformerCfg.FrameCfg(
+                prim_path="/World/envs/env_.*/Robot/left_tray_holder_link",
+                name="left_tray_holder",
+            ),
+            FrameTransformerCfg.FrameCfg(
+                prim_path="/World/envs/env_.*/Plate",
+                name="plate",
+            ),
+        ],
+    )
+
 
 @configclass
 class G1RobotObjectSceneCfg(G1RobotPlateSceneCfg):
@@ -267,5 +298,17 @@ class G1RobotObjectSceneCfg(G1RobotPlateSceneCfg):
         track_air_time=False,
         filter_prim_paths_expr=["/World/envs/env_.*/Plate"],
         history_length=3,
+    )
+
+    # object tray transform
+    object_tray_transform: FrameTransformerCfg = FrameTransformerCfg(
+        prim_path="/World/envs/env_.*/Plate",
+        #debug_vis=True,
+        target_frames=[
+            FrameTransformerCfg.FrameCfg(
+                prim_path="/World/envs/env_.*/Object",
+                name="object",
+            ),
+        ],
     )
 

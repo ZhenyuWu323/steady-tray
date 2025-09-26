@@ -22,8 +22,8 @@ from rsl_rl.modules import (
     StudentTeacherRecurrent,
 )
 from rsl_rl.utils import store_code_state
-from residual_env_wrapper import ResidualVecEnvWrapper
-from policy.residual_module import ResidualModule
+from .residual_env_wrapper import ResidualVecEnvWrapper
+from .policy.residual_module import ResidualModule
 
 class ResidualOnPolicyRunner:
     """On-policy runner for training and evaluation."""

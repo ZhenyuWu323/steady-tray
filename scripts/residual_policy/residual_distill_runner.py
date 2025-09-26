@@ -23,8 +23,8 @@ from rsl_rl.modules import (
 )
 from rsl_rl.utils import store_code_state
 from .residual_env_wrapper import ResidualVecEnvWrapper
-from policy.residual_module import ResidualModule
-from policy.residual_student_teacher import ResidualStudentTeacher
+from .policy.residual_module import ResidualModule
+from .policy.residual_student_teacher import ResidualStudentTeacher
 from .distill import DistillationRolloutStorage, DistillationRunner
 
 

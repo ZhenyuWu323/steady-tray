@@ -507,61 +507,6 @@ def compute_pose_deviation_penalty(
     return total_penalty
 
 
-def object_friction_penalty(
-    object_contact_sensor: ContactSensor, 
-    plate_quat_w: torch.Tensor,
-    mu_static_object: torch.Tensor,
-    mu_static_plate: torch.Tensor,
-    contact_threshold: float = 0.0,
-    weight: float = -0.01,
-) -> torch.Tensor:
-    """Penalize object friction with plate by friction cone."""
-    force_matrix_w = object_contact_sensor.data.force_matrix_w
-    if force_matrix_w is None:
-        return torch.zeros(plate_quat_w.shape[0], device=plate_quat_w.device)
-    
-    mu_static = torch.sqrt(mu_static_object * mu_static_plate).to(plate_quat_w.device)
-    
-    # transform contact forces to plate frame
-    contact_forces = force_matrix_w[:, :, 0, :]
-    forces_plate = quat_apply_inverse(
-        plate_quat_w.unsqueeze(1),  # [N, 1, 4]
-        contact_forces  # [N, B, 3]
-    )
-    rewards = []
-    for i in range(forces_plate.shape[1]):
-        f = forces_plate[:, i, :]
-        f_z = f[:, 2]
-        f_xy = f[:, :2]
-        
-        # only consider points with contact
-        has_contact = torch.abs(f_z) > contact_threshold
-        
-        # friction cone check
-        f_tang_mag = torch.norm(f_xy, dim=-1)
-        violation = torch.maximum(
-            f_tang_mag - mu_static * torch.abs(f_z),
-            torch.zeros_like(f_tang_mag)
-        )
-        
-        # smooth penalty
-        point_penalty = torch.where(
-            has_contact,
-            violation,  # L2 normalized
-            torch.zeros_like(violation)
-        )
-        rewards.append(point_penalty)
-    
-    # combine all contact point rewards
-    if len(rewards) > 0:
-        total_reward = torch.stack(rewards, dim=-1).mean(dim=-1)
-    else:
-        total_reward = torch.zeros_like(plate_quat_w[:, 0])
-    
-    return total_reward * weight
-
-
-
 def body_contacts(threshold: float, contact_sensor: ContactSensor, body_ids: List[int], weight: float) -> torch.Tensor:
     """Penalize undesired contacts as the number of violations that are above a threshold."""
     # extract the used quantities (to enable type-hinting)
@@ -798,6 +743,35 @@ def plate_friction_penalty(
     normal_force = torch.abs(total_contact_forces_plate[:, 2]) + 1e-6
     no_contact = normal_force < contact_threshold
     tangential_force = torch.norm(total_contact_forces_plate[:, :2], dim=1).to(device)
+    friction_ratio = tangential_force / (mu_static * normal_force)
+    return torch.where(no_contact, torch.zeros_like(friction_ratio, device=device), friction_ratio ** 2) * weight
+
+
+def object_friction_penalty(
+    object_contact_sensor: ContactSensor, 
+    plate_quat_w: torch.Tensor,
+    mu_static_object: torch.Tensor,
+    mu_static_plate: torch.Tensor,
+    contact_threshold: float = 0.1,
+    weight: float = -0.01,
+) -> torch.Tensor:
+    """Penalize object friction with plate by friction cone."""
+    force_matrix_w = object_contact_sensor.data.force_matrix_w
+    device = plate_quat_w.device
+    if force_matrix_w is None:
+        return torch.zeros(plate_quat_w.shape[0], device=plate_quat_w.device)
+    
+    mu_static = (mu_static_object + mu_static_plate)/2.0
+    mu_static = mu_static.to(device)
+    
+    # transform contact forces to plate frame
+    contact_forces = force_matrix_w[:, 0, 0, :]
+    forces_plate = quat_apply_inverse(plate_quat_w, contact_forces).to(device)
+    
+    # friction cone violation
+    normal_force = torch.abs(forces_plate[:, 2]) + 1e-6
+    no_contact = normal_force < contact_threshold
+    tangential_force = torch.norm(forces_plate[:, :2], dim=1).to(device)
     friction_ratio = tangential_force / (mu_static * normal_force)
     return torch.where(no_contact, torch.zeros_like(friction_ratio, device=device), friction_ratio ** 2) * weight
     
