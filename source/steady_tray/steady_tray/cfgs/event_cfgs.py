@@ -88,8 +88,8 @@ class G1RobotPlateEventCfg(G1RobotEventCfg):
         mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("robot", body_names=".*_tray_holder_.*"),
-            "static_friction_range": (0.7, 1.0),
-            "dynamic_friction_range": (0.7, 1.0),
+            "static_friction_range": (0.3, 1.0),
+            "dynamic_friction_range": (0.3, 1.0),
             "restitution_range": (0.0, 0.0),
             "num_buckets": 64,
         },
@@ -112,8 +112,8 @@ class G1RobotPlateEventCfg(G1RobotEventCfg):
         mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("plate", body_names=".*"),
-            "static_friction_range": (0.5, 1.0),
-            "dynamic_friction_range": (0.5, 1.0),
+            "static_friction_range": (0.3, 1.0),
+            "dynamic_friction_range": (0.3, 1.0),
             "restitution_range": (0.0, 0.0),
             "num_buckets": 64,
         },

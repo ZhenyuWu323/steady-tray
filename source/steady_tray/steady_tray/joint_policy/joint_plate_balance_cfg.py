@@ -40,11 +40,26 @@ class G1JointPlateBalanceEnvCfg(G1JointLocomotionEnvCfg):
     # tray holder transform
     left_tray_holder_transform: FrameTransformerCfg = FrameTransformerCfg(
         prim_path="/World/envs/env_.*/Robot/left_tray_holder_link",
-        debug_vis=True,
+        #debug_vis=True,
         target_frames=[
             FrameTransformerCfg.FrameCfg(
                 prim_path="/World/envs/env_.*/Robot/right_tray_holder_link",
                 name="right_tray_holder",
+            ),
+            FrameTransformerCfg.FrameCfg(
+                prim_path="/World/envs/env_.*/Plate",
+                name="plate",
+            ),
+        ],
+    )
+
+    right_tray_holder_transform: FrameTransformerCfg = FrameTransformerCfg(
+        prim_path="/World/envs/env_.*/Robot/right_tray_holder_link",
+        #debug_vis=True,
+        target_frames=[
+            FrameTransformerCfg.FrameCfg(
+                prim_path="/World/envs/env_.*/Robot/left_tray_holder_link",
+                name="left_tray_holder",
             ),
             FrameTransformerCfg.FrameCfg(
                 prim_path="/World/envs/env_.*/Plate",

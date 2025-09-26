@@ -122,6 +122,8 @@ class G1RobotSceneCfg(DirectRLEnvCfg):
     feet_body_name = ".*_ankle_roll_link"
     pelvis_names = "pelvis"
     camera_names = "d435_link"
+    left_ee_name = "left_tray_holder_link"
+    right_ee_name = "right_tray_holder_link"
 
 
     # gait phase
