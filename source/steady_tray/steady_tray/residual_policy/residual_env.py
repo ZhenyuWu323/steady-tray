@@ -144,6 +144,8 @@ class G1ResidualEnv(DirectRLEnv):
                 "penalty_object_lin_vel_plate",
                 "penalty_object_ang_vel_plate",
                 "penalty_object_friction",
+                "penalty_lower_body_dof_torque",
+                "penalty_upper_body_dof_torque",
             ]
         }
 
@@ -314,6 +316,12 @@ class G1ResidualEnv(DirectRLEnv):
             joint_idx=self.lower_body_indexes,
             weight=-0.001,
         )
+        # lower body torques
+        penalty_lower_body_dof_torque = mdp.joint_torque_l2(
+            joint_torque=self.robot.data.applied_torque,
+            joint_idx=self.lower_body_indexes,
+            weight=-2e-5,
+        )
 
         # action rate
         penalty_lower_body_action_rate = mdp.action_rate_l2(
@@ -397,6 +405,12 @@ class G1ResidualEnv(DirectRLEnv):
             joint_idx=self.upper_body_indexes,
             weight=-0.001,
         )
+        # upper body torques
+        penalty_upper_body_dof_torque = mdp.joint_torque_l2(
+            joint_torque=self.robot.data.applied_torque,
+            joint_idx=self.upper_body_indexes,
+            weight=-2e-5,
+        )
 
             
         # alive reward
@@ -413,6 +427,7 @@ class G1ResidualEnv(DirectRLEnv):
             penalty_lower_body_dof_pos_limits + 
             penalty_lower_body_dof_acc + 
             penalty_lower_body_dof_vel + 
+            penalty_lower_body_dof_torque +
             penalty_lower_body_action_rate + 
             penalty_feet_slide + 
             penalty_base_height +
@@ -422,12 +437,15 @@ class G1ResidualEnv(DirectRLEnv):
             penalty_upper_body_dof_acc + 
             penalty_upper_body_dof_pos_limits + 
             penalty_upper_body_action_rate + 
-            penalty_upper_body_dof_vel
+            penalty_upper_body_dof_vel +
+            penalty_upper_body_dof_torque
         )
         self._episode_sums["tracking_lin_vel_xy"] += tracking_lin_vel_xy
         self._episode_sums["tracking_ang_vel_z"] += tracking_ang_vel_z
         self._episode_sums["gait_phase_reward"] += feet_gait_reward
         self._episode_sums["feet_clearance_reward"] += feet_clearance_reward
+        self._episode_sums["penalty_lower_body_dof_torque"] += penalty_lower_body_dof_torque
+        self._episode_sums["penalty_upper_body_dof_torque"] += penalty_upper_body_dof_torque
         return locomotion_reward
     
 
@@ -526,7 +544,7 @@ class G1ResidualEnv(DirectRLEnv):
         penalty_force_l2 = mdp.penalty_force_l2(
             plate_contact_sensor=self._plate_contact_sensor,
             plate_quat_w=self._plate.data.root_quat_w,
-            weight=-1e-3,
+            weight=-2e-5,
         )
         penalty_force_l2 = torch.clip(penalty_force_l2, min=-1.0)
 
@@ -854,8 +872,7 @@ Helper Functions
 @torch.jit.script
 def compute_plate_pos_tracking_weight(object_projected_gravity: torch.Tensor, weight: float):
 
-    tilt_angle = torch.acos(torch.clamp(object_projected_gravity[:, 2], -1, 1))
-    
+    tilt_angle = torch.acos(-torch.clamp(object_projected_gravity[:, 2], -1, 1))
     
     tilt_threshold = 0.15  
     weight_multiplier = torch.where(

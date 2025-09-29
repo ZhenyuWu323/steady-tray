@@ -160,7 +160,7 @@ class G1JointPlateBalanceEnv(G1JointLocomotionEnv):
             pelvis_pos_w=self.robot.data.body_pos_w[:, self.pelvis_indexes, :],
             pelvis_quat_w=self.robot.data.body_quat_w[:, self.pelvis_indexes, :],
             target_plate_pos_pelvis=self.command_manager.get_command("plate_pose"),
-            weight=2.0,
+            weight=1.0,
             sigma=0.05,
         )
 
@@ -198,9 +198,9 @@ class G1JointPlateBalanceEnv(G1JointLocomotionEnv):
         penalty_force_l2 = mdp.penalty_force_l2(
             plate_contact_sensor=self._plate_contact_sensor,
             plate_quat_w=self._plate.data.root_quat_w,
-            weight=-2e-5,
+            weight=0,
         )
-        penalty_force_l2 = torch.clip(penalty_force_l2, min=-1.0)
+        #penalty_force_l2 = torch.clip(penalty_force_l2, min=-1.0)
 
 
         plate_balance_reward = (

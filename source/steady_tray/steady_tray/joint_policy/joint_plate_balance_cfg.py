@@ -2,7 +2,7 @@ from isaaclab.assets import ArticulationCfg
 from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.utils import configclass
 from steady_tray.assets import G1_CIRCLE_TRAY_CFG
-from steady_tray.cfgs import G1RobotPlateEventCfg, CommandsCfg, JointActionsCfg, G1RobotPlateSceneCfg
+from steady_tray.cfgs import G1RobotPlateEventCfg, JointActionsCfg, G1RobotPlateSceneCfg
 from steady_tray.cfgs import CurriculumCfg
 from steady_tray import mdp
 from isaaclab.managers import ObservationGroupCfg as ObsGroup
