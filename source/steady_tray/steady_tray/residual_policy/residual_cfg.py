@@ -2,7 +2,7 @@ from isaaclab.assets import ArticulationCfg
 from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.utils import configclass
 from steady_tray.assets import G1_CIRCLE_TRAY_CFG, G1_HOOK_TRAY_CFG
-from steady_tray.cfgs import G1RobotObjectEventCfg, G1RobotObjectSceneCfg, ResidualObservationsCfg, CommandsCfg
+from steady_tray.cfgs import G1RobotObjectEventCfg, G1RobotObjectSceneCfg, ResidualObservationsCfg, ResidualCommandsCfg
 
 
 
@@ -41,7 +41,7 @@ class G1ResidualEnvCfg(G1RobotObjectSceneCfg):
     events: G1RobotObjectEventCfg = G1RobotObjectEventCfg()
 
     # command
-    commands: CommandsCfg = CommandsCfg()
+    commands: ResidualCommandsCfg = ResidualCommandsCfg()
 
     # observations
     observations: ResidualObservationsCfg = ResidualObservationsCfg()

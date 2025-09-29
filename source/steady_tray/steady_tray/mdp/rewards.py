@@ -775,3 +775,7 @@ def object_friction_penalty(
     friction_ratio = tangential_force / (mu_static * normal_force)
     return torch.where(no_contact, torch.zeros_like(friction_ratio, device=device), friction_ratio ** 2) * weight
     
+@torch.jit.script
+def energy(joint_vel: torch.Tensor, joint_torque: torch.Tensor, joint_idx: List[int], weight: float) -> torch.Tensor:
+    """Penalize the energy used by the robot's joints."""
+    return torch.sum(torch.abs(joint_vel[:, joint_idx]) * torch.abs(joint_torque[:, joint_idx]), dim=-1) * weight

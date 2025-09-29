@@ -29,7 +29,7 @@ class G1RobotSceneCfg(DirectRLEnvCfg):
             dynamic_friction=1.0,
         ),
         physx=PhysxCfg(
-            gpu_max_rigid_patch_count = 20 * 2**15
+            gpu_max_rigid_patch_count = 30 * 2**15
         ),
     )
 
@@ -227,7 +227,7 @@ class G1RobotPlateSceneCfg(G1RobotSceneCfg):
     plate_cfg = RigidObjectCfg(
         prim_path="/World/envs/env_.*/Plate",
         spawn=sim_utils.UsdFileCfg(
-            usd_path=f"{ASSETS_DATA_DIR}/tray.usd",
+            usd_path=f"{ASSETS_DATA_DIR}/tray_flat.usd",
             activate_contact_sensors=True,
             rigid_props=sim_utils.RigidBodyPropertiesCfg(),
             mass_props=sim_utils.MassPropertiesCfg(mass=0.1),

@@ -88,8 +88,8 @@ class G1RobotPlateEventCfg(G1RobotEventCfg):
         mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("robot", body_names=".*_tray_holder_.*"),
-            "static_friction_range": (0.3, 1.0),
-            "dynamic_friction_range": (0.3, 1.0),
+            "static_friction_range": (0.5, 1.0),
+            "dynamic_friction_range": (0.5, 1.0),
             "restitution_range": (0.0, 0.0),
             "num_buckets": 64,
         },
@@ -101,7 +101,7 @@ class G1RobotPlateEventCfg(G1RobotEventCfg):
         mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("robot", body_names=".*_tray_holder_.*"),
-            "mass_distribution_params": (0.5, 1.0),
+            "mass_distribution_params": (0.05, 0.5),
             "operation": "abs",
         },
     )
@@ -124,7 +124,7 @@ class G1RobotPlateEventCfg(G1RobotEventCfg):
         mode="startup",
         params={
             "asset_cfg": SceneEntityCfg("plate", body_names=".*"),
-            "mass_distribution_params": (0.5, 1.0),
+            "mass_distribution_params": (0.3, 1.0),
             "operation": "abs",
         },
     )
@@ -192,7 +192,15 @@ class G1RobotObjectEventCfg(G1RobotPlateEventCfg):
             "object_asset_cfg": SceneEntityCfg("object"),
             "plate_offset": PLATE_OFFSET,
             "plate_xy_rand_radius": 0.00,
-            "object_xy_rand_radius": 0.09,
+            "object_xy_offset": ((0, 0), (0, 0)),
             "object_z_up": 0.1,
         },
+    )
+
+    # interval
+    push_robot = EventTerm(
+        func=mdp.push_by_setting_velocity,
+        mode="interval",
+        interval_range_s=(5.0, 15.0),
+        params={"velocity_range": {"x": (-0.5, 0.5), "y": (-0.5, 0.5)}},
     )

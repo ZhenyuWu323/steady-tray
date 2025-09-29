@@ -301,6 +301,10 @@ class ResidualOnPolicyRunner:
             for key in self.body_keys:
                 if key == "residual_whole_body":
                     loss_dict[key] = self.algs[key].update()
+
+            # step residual policy burnin
+            if self.algs["residual_whole_body"].policy.in_burnin:
+                self.algs["residual_whole_body"].policy.step_burnin()
                
             stop = time.time()
             learn_time = stop - start

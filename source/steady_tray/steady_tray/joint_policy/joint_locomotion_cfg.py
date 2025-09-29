@@ -2,7 +2,7 @@ from isaaclab.assets import ArticulationCfg
 from isaaclab.scene import InteractiveSceneCfg
 from isaaclab.utils import configclass
 from steady_tray.assets import G1_CIRCLE_TRAY_CFG, G1_HOOK_TRAY_CFG
-from steady_tray.cfgs import G1RobotPlateEventCfg, CommandsCfg, JointPolicyObservationsCfg, JointActionsCfg, G1RobotPlateSceneCfg
+from steady_tray.cfgs import G1RobotPlateEventCfg, JointCommandsCfg, JointPolicyObservationsCfg, JointActionsCfg, G1RobotPlateSceneCfg
 
 
 
@@ -43,7 +43,7 @@ class G1JointLocomotionEnvCfg(G1RobotPlateSceneCfg):
     events: G1RobotPlateEventCfg = G1RobotPlateEventCfg()
 
     # command
-    commands: CommandsCfg = CommandsCfg()
+    commands: JointCommandsCfg = JointCommandsCfg()
 
     # actions
     actions: JointActionsCfg = JointActionsCfg()

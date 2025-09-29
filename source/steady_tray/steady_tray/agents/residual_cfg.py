@@ -31,6 +31,9 @@ class RslRlResidualActorCriticCfg:
     encoder_num_layers: int = MISSING
     """The number of layers in the encoder."""
 
+    burnin_epochs: int = 0
+    """The number of epochs to burn in the actor network."""
+
     activation: str = MISSING
     """The activation function for the actor and critic networks."""
 

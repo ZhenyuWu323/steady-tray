@@ -5,7 +5,7 @@ from typing import Sequence
 
 import torch
 
-from isaaclab.envs.mdp import UniformVelocityCommandCfg
+from isaaclab.envs.mdp import UniformVelocityCommandCfg,UniformVelocityCommand
 from isaaclab.utils import configclass
 from isaaclab.managers import CommandTermCfg
 from isaaclab.managers import CommandTerm
@@ -20,10 +20,40 @@ from steady_tray.assets import PLATE_OFFSET
 """
 Velocity Command
 """
+class UniformLevelVelocityCommand(UniformVelocityCommand):
+    cfg: UniformLevelVelocityCommandCfg
+
+    def __init__(self, cfg: UniformLevelVelocityCommandCfg, env: ManagerBasedRLEnv):
+        super().__init__(cfg, env)
+        self.delay_steps = getattr(cfg, 'delay_steps', 0)
+        self.steps_since_reset = torch.zeros(env.num_envs, device=env.device, dtype=torch.long)
+        
+
+    @property
+    def command(self) -> torch.Tensor:
+        mask = self.steps_since_reset >= self.delay_steps
+        result = torch.zeros_like(self.vel_command_b)
+        result[mask] = self.vel_command_b[mask]
+        return result
+    
+    def reset(self, env_ids: Sequence[int] | None = None) -> dict[str, float]:
+        if env_ids is None:
+            env_ids = slice(None)
+        self.steps_since_reset[env_ids] = 0
+        return super().reset(env_ids)
+    
+    def compute(self, dt: float):
+        self.steps_since_reset += 1
+        super().compute(dt)
+    
+
 
 @configclass
 class UniformLevelVelocityCommandCfg(UniformVelocityCommandCfg):
-    limit_ranges: UniformVelocityCommandCfg.Ranges = MISSING
+    class_type: type = UniformLevelVelocityCommand
+
+    delay_steps: int = 0
+    """The number of steps to delay the command."""
 
 
 """
@@ -106,6 +136,10 @@ class PlatePoseCommand(CommandTerm):
          
         self.pose_command_b = torch.zeros(env.num_envs, 3, device=env.device)
         self.pose_command_w = torch.zeros(env.num_envs, 3, device=env.device)
+
+        self.delay_steps = getattr(cfg, 'delay_steps', 0)
+        self.steps_since_reset = torch.zeros(env.num_envs, device=env.device, dtype=torch.long)
+        
         
         
         self.metrics["position_error"] = torch.zeros(env.num_envs, device=env.device)
@@ -119,16 +153,35 @@ class PlatePoseCommand(CommandTerm):
     
     @property
     def command(self) -> torch.Tensor:
-        return self.pose_command_b
+        mask = self.steps_since_reset >= self.delay_steps
+        result = torch.zeros_like(self.pose_command_b)
+        result[mask] = self.pose_command_b[mask]
+        return result
     
     @property
     def offset(self) -> torch.Tensor:
-        return self._offset
+        mask = self.steps_since_reset >= self.delay_steps
+        result = torch.zeros_like(self._offset)
+        result[mask] = self._offset[mask]
+        return result
 
     @property
     def command_world(self) -> torch.Tensor:
-        return self.pose_command_w
+        mask = self.steps_since_reset >= self.delay_steps
+        result = torch.zeros_like(self.pose_command_w)
+        result[mask] = self.pose_command_w[mask]
+        return result
     
+    def reset(self, env_ids: Sequence[int] | None = None) -> dict[str, float]:
+        if env_ids is None:
+            env_ids = slice(None)
+        self.steps_since_reset[env_ids] = 0
+        return super().reset(env_ids)
+    
+    def compute(self, dt: float):
+        self.steps_since_reset += 1
+        super().compute(dt)
+
     def _update_command(self):
         pass
 
@@ -205,6 +258,9 @@ class PlatePoseCommandCfg(CommandTermCfg):
 
     default_pose: list[float] = PLATE_OFFSET
     """Default pose for the plate pose command."""
+
+    delay_steps: int = 0
+    """The number of steps to delay the command."""
 
     @configclass
     class Ranges:

@@ -557,6 +557,13 @@ class G1ResidualEnv(DirectRLEnv):
 
     def _get_object_rewards(self) -> torch.Tensor:
         """
+        Object Dropped
+        """
+        # object_dropped = self._object.data.root_pos_w[:, 2] < self.cfg.termination_height
+        # penalty_object_dropped = object_dropped * -1.5
+        
+
+        """
         Object Pose Rewards
         """
         object_pos_in_plate = self._object_tray_transform.data.target_pos_source[:, self.object_tray_idx, :]
@@ -565,18 +572,18 @@ class G1ResidualEnv(DirectRLEnv):
         penalty_object_pose_deviation = mdp.penalty_pos_deviation_l2(
             current_pos=object_pos_in_plate,
             target_pos=self.default_object2plate_pos,
-            weight=-2.0,
+            weight=-0.1,
         )
 
         penalty_object_quat_deviation = mdp.penalty_quat_deviation(
             current_quat=object_quat_in_plate,
             target_quat=self.default_object2plate_quat,
-            weight=-0.2,
+            weight=-0.0,
         )
 
         penalty_object_projected_gravity = mdp.flat_orientation_l2(
             projected_gravity_b=self._object.data.projected_gravity_b,
-            weight=-5.0,
+            weight=-0.5,
         )
         
         object_upright_bonus = mdp.cup_upright_bonus_exp_new(
@@ -648,7 +655,11 @@ class G1ResidualEnv(DirectRLEnv):
         """
         Residual Rewards
         """
-        residual_whole_body_reward = (locomotion_reward + plate_balance_reward + object_stabilization_reward) * self.step_dt
+        residual_whole_body_reward = (
+            locomotion_reward 
+            + plate_balance_reward 
+            + object_stabilization_reward
+        ) * self.step_dt
         
         
         return {'upper_body': torch.zeros(self.num_envs, device=self.device), 
@@ -663,9 +674,9 @@ class G1ResidualEnv(DirectRLEnv):
         died = self.robot.data.body_pos_w[:, self.ref_body_index, 2] < self.cfg.termination_height
 
         plate_dropped = self._plate.data.root_pos_w[:, 2] < self.cfg.termination_height
-        object_dropped = self._object.data.root_pos_w[:, 2] < self.cfg.termination_height
+        #object_dropped = self._object.data.root_pos_w[:, 2] < self.cfg.termination_height
         died = torch.logical_or(died, plate_dropped)
-        died = torch.logical_or(died, object_dropped)
+        #died = torch.logical_or(died, object_dropped)
 
         return died, time_out
     
@@ -831,3 +842,26 @@ class G1ResidualEnv(DirectRLEnv):
             del self.command_manager
             del self.observation_manager
         super().close()
+
+
+
+
+
+"""
+Helper Functions
+"""
+
+@torch.jit.script
+def compute_plate_pos_tracking_weight(object_projected_gravity: torch.Tensor, weight: float):
+
+    tilt_angle = torch.acos(torch.clamp(object_projected_gravity[:, 2], -1, 1))
+    
+    
+    tilt_threshold = 0.15  
+    weight_multiplier = torch.where(
+        tilt_angle > tilt_threshold,
+        torch.exp(-(tilt_angle - tilt_threshold) * 10),  
+        torch.ones_like(tilt_angle)
+    )
+    
+    return weight * torch.clamp(weight_multiplier, 0.02, 1.0)  

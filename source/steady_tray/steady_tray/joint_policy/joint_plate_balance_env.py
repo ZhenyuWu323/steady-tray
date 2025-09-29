@@ -198,7 +198,7 @@ class G1JointPlateBalanceEnv(G1JointLocomotionEnv):
         penalty_force_l2 = mdp.penalty_force_l2(
             plate_contact_sensor=self._plate_contact_sensor,
             plate_quat_w=self._plate.data.root_quat_w,
-            weight=-1e-3,
+            weight=-2e-5,
         )
         penalty_force_l2 = torch.clip(penalty_force_l2, min=-1.0)
 

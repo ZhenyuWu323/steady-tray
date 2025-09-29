@@ -71,7 +71,8 @@ class G1ResidualRunnerCfg(RslRlOnPolicyRunnerCfg):
         critic_hidden_dims=[512, 256, 128],
         encoder_d_model=32,
         encoder_nhead=2,
-        encoder_num_layers=2,
+        encoder_num_layers=1,
+        burnin_epochs=0,
         activation="elu",
     )
     # upper body policy

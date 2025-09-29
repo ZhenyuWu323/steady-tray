@@ -28,6 +28,7 @@ class ResidualModule(nn.Module):
         encoder_d_model=128,
         encoder_nhead=8,
         encoder_num_layers=2,
+        burnin_epochs=0,
         activation="elu",
         init_noise_std=1.0,
         noise_std_type: str = "scalar",
@@ -59,6 +60,10 @@ class ResidualModule(nn.Module):
                 actor_layers.append(nn.Linear(actor_hidden_dims[layer_index], actor_hidden_dims[layer_index + 1]))
                 actor_layers.append(activation)
         self.actor = nn.Sequential(*actor_layers)
+        # zero init the last layer of the actor network
+        with torch.no_grad():
+            self.actor[-1].weight.zero_()
+            self.actor[-1].bias.zero_()
 
         # Value function
         critic_layers = []
@@ -93,6 +98,13 @@ class ResidualModule(nn.Module):
         # disable args validation for speedup
         Normal.set_default_validate_args(False)
 
+        self.burnin_epochs = burnin_epochs
+        self.current_epoch = 0
+        self.in_burnin = burnin_epochs > 0
+        if self.in_burnin:
+            print(f"[INFO] Freeze Actor Network for Burn-in Epoch {self.burnin_epochs}")
+            self._freeze_actor()
+
     @staticmethod
     # not used at the moment
     def init_weights(sequential, scales):
@@ -106,6 +118,29 @@ class ResidualModule(nn.Module):
 
     def forward(self):
         raise NotImplementedError
+    
+    def _freeze_actor(self):
+        for param in self.actor.parameters():
+            param.requires_grad = False
+        if hasattr(self, 'std'):
+            self.std.requires_grad = False
+            self._original_std = self.std.data.clone()
+            self.std.data.fill_(1e-6)
+        elif hasattr(self, 'log_std'):
+            self.log_std.requires_grad = False
+            self._original_log_std = self.log_std.data.clone()
+            self.log_std.data.fill_(torch.log(torch.tensor(1e-6)))
+
+    def _unfreeze_actor(self):
+        for param in self.actor.parameters():
+            param.requires_grad = True
+        if hasattr(self, 'std'):
+            self.std.requires_grad = True
+            self.std.data.copy_(self._original_std)
+        elif hasattr(self, 'log_std'):
+            self.log_std.requires_grad = True
+            self.log_std.data.copy_(self._original_log_std)
+
     
     def _extract_encoder_obs(self, observations):
         # extract encoder observations
@@ -173,6 +208,14 @@ class ResidualModule(nn.Module):
         critic_input = self._prepare_obs_input(critic_observations)
         value = self.critic(critic_input)
         return value
+    
+    def step_burnin(self):
+        self.current_epoch += 1
+        if self.in_burnin and self.current_epoch >= self.burnin_epochs:
+            self._unfreeze_actor()
+            self.in_burnin = False
+            print(f"Burn-in ended at epoch {self.current_epoch}")
+
 
     def load_state_dict(self, state_dict, strict=True):
         """Load the parameters of the actor-critic model.

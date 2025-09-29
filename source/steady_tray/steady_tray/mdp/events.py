@@ -392,7 +392,7 @@ def reset_plate_object_state(
     object_asset_cfg: Optional[SceneEntityCfg] = None,
     plate_offset: list[float] = PLATE_OFFSET,
     plate_xy_rand_radius: float = 0.00,
-    object_xy_rand_radius: float = 0.08,
+    object_xy_offset: tuple[tuple[float, float], tuple[float, float]] = ((0.0, 0.0), (0.0, 0.0)),
     object_z_up: float = 0.1,
 ):
     """Reset the state of the plate."""
@@ -426,13 +426,12 @@ def reset_plate_object_state(
         object_asset: RigidObject = env.scene[object_asset_cfg.name]
         object_pos_world = plate_pos_world.clone()
 
-        if object_xy_rand_radius > 0.0:
+        x_min, x_max = object_xy_offset[0]
+        y_min, y_max = object_xy_offset[1]
 
-            random_radius = torch.sqrt(torch.rand(len(env_ids), device=env.device)) * object_xy_rand_radius
-            random_angle = torch.rand(len(env_ids), device=env.device) * 2 * math.pi
-            
-            random_x = random_radius * torch.cos(random_angle)
-            random_y = random_radius * torch.sin(random_angle)
+        if (x_max - x_min) >= 0.0 or (y_max - y_min) >= 0.0:
+            random_x = torch.rand(len(env_ids), device=env.device) * (x_max - x_min) + x_min
+            random_y = torch.rand(len(env_ids), device=env.device) * (y_max - y_min) + y_min
             object_pos_world[:, 0] += random_x  # x offset
             object_pos_world[:, 1] += random_y  # y offset
 

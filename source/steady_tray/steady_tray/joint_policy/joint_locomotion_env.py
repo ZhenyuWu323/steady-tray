@@ -88,6 +88,8 @@ class G1JointLocomotionEnv(DirectRLEnv):
                 "gait_phase_reward",
                 "feet_clearance_reward",
                 "tracking_upper_body_dof_pos",
+                "penalty_lower_body_dof_torque",
+                "penalty_upper_body_dof_torque",
             ]
         }
 
@@ -238,6 +240,13 @@ class G1JointLocomotionEnv(DirectRLEnv):
             weight=-0.001,
         )
 
+        # lower body torques
+        penalty_lower_body_dof_torque = mdp.joint_torque_l2(
+            joint_torque=self.robot.data.applied_torque,
+            joint_idx=self.lower_body_indexes,
+            weight=-2e-5,
+        )
+
         # action rate
         penalty_lower_body_action_rate = mdp.action_rate_l2(
             action=self.actions[:, self.cfg.action_dim["upper_body"]:],
@@ -333,6 +342,13 @@ class G1JointLocomotionEnv(DirectRLEnv):
             weight=-0.001,
         )
 
+        # upper body torques
+        penalty_upper_body_dof_torque = mdp.joint_torque_l2(
+            joint_torque=self.robot.data.applied_torque,
+            joint_idx=self.upper_body_indexes,
+            weight=-2e-5,
+        )
+
             
         # alive reward
         alive_reward = mdp.alive_reward(terminated=died, weight=0.15)
@@ -348,6 +364,7 @@ class G1JointLocomotionEnv(DirectRLEnv):
                              penalty_lower_body_dof_pos_limits + 
                              penalty_lower_body_dof_acc + 
                              penalty_lower_body_dof_vel + 
+                             penalty_lower_body_dof_torque +
                              penalty_lower_body_action_rate + 
                              penalty_feet_slide + 
                              penalty_base_height +
@@ -362,6 +379,7 @@ class G1JointLocomotionEnv(DirectRLEnv):
             penalty_upper_body_dof_pos_limits + 
             penalty_upper_body_action_rate + 
             penalty_upper_body_dof_vel + 
+            penalty_upper_body_dof_torque +
             alive_reward
         )
 
@@ -370,7 +388,8 @@ class G1JointLocomotionEnv(DirectRLEnv):
         self._episode_sums["gait_phase_reward"] += feet_gait_reward
         self._episode_sums["feet_clearance_reward"] += feet_clearance_reward
         self._episode_sums["tracking_upper_body_dof_pos"] += tracking_upper_body_dof_pos
-        
+        self._episode_sums["penalty_lower_body_dof_torque"] += penalty_lower_body_dof_torque
+        self._episode_sums["penalty_upper_body_dof_torque"] += penalty_upper_body_dof_torque
 
 
         # reward 

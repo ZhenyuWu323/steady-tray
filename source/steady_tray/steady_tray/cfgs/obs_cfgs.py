@@ -112,10 +112,12 @@ class ResidualObservationsCfg:
         object_position_in_plate = ObsTerm(func=mdp.object_position_in_plate_frame, noise=Unoise(n_min=-0.01, n_max=0.01))
         object_orientation_in_plate = ObsTerm(func=mdp.object_orientation_in_plate_frame, noise=UniformNoiseQuatCfg(min=-0.005, max=0.005))
         object_twist_in_plate = ObsTerm(func=mdp.object_twist_in_plate_frame, noise=Unoise(n_min=-0.2, n_max=0.2))
-        
+        # object_physics = ObsTerm(func=mdp.object_physics)
+        # object_mass = ObsTerm(func=mdp.object_mass)
+        # object_projected_gravity = ObsTerm(func=mdp.object_projected_gravity)
         def __post_init__(self):
             self.history_length = 5
-            self.enable_corruption = True
+            self.enable_corruption = False
             self.concatenate_terms = True
 
 
@@ -140,6 +142,9 @@ class ResidualObservationsCfg:
         object_position_in_plate = ObsTerm(func=mdp.object_position_in_plate_frame, history_length=5)
         object_orientation_in_plate = ObsTerm(func=mdp.object_orientation_in_plate_frame, history_length=5)
         object_twist_in_plate = ObsTerm(func=mdp.object_twist_in_plate_frame, history_length=5)
+        # object_physics = ObsTerm(func=mdp.object_physics, history_length=5)
+        # object_mass = ObsTerm(func=mdp.object_mass, history_length=5)
+        # object_projected_gravity = ObsTerm(func=mdp.object_projected_gravity, history_length=5)
 
         def __post_init__(self):
             self.concatenate_terms = True
