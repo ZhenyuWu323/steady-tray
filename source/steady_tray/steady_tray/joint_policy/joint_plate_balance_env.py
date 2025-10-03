@@ -84,7 +84,7 @@ class G1JointPlateBalanceEnv(G1JointLocomotionEnv):
     def _get_dones(self) -> tuple[torch.Tensor, torch.Tensor]:
         died, time_out = super()._get_dones()
 
-        plate_dropped = self._plate.data.root_pos_w[:, 2] < self.cfg.termination_height
+        plate_dropped = self._plate.data.root_pos_w[:, 2] < self.robot.data.body_pos_w[:, self.pelvis_indexes, 2]
         died = torch.logical_or(died, plate_dropped)
 
         return died, time_out
@@ -170,10 +170,10 @@ class G1JointPlateBalanceEnv(G1JointLocomotionEnv):
         """
         # penalty_plate_lin_vel_w = torch.sum(torch.square(self._plate.data.root_lin_vel_w), dim=1) * -0.01
         # penalty_plate_ang_vel_w = torch.sum(torch.square(self._plate.data.root_ang_vel_w), dim=1) * -0.01
-        penalty_plate_lin_acc_w = torch.sum(torch.square(self._plate.data.body_lin_acc_w[:, 0, :]), dim=1) * -0.001
-        penalty_plate_lin_acc_w = torch.clip(penalty_plate_lin_acc_w, min=-1.0)
-        penalty_plate_ang_acc_w = torch.sum(torch.square(self._plate.data.body_ang_acc_w[:, 0, :]), dim=1) * -1e-4
-        penalty_plate_ang_acc_w = torch.clip(penalty_plate_ang_acc_w, min=-1.0)
+        # penalty_plate_lin_acc_w = torch.sum(torch.square(self._plate.data.body_lin_acc_w[:, 0, :]), dim=1) * -0.001
+        # penalty_plate_lin_acc_w = torch.clip(penalty_plate_lin_acc_w, min=-1.0)
+        # penalty_plate_ang_acc_w = torch.sum(torch.square(self._plate.data.body_ang_acc_w[:, 0, :]), dim=1) * -1e-4
+        # penalty_plate_ang_acc_w = torch.clip(penalty_plate_ang_acc_w, min=-1.0)
 
         # plate projected gravity
         penalty_plate_projected_gravity = mdp.flat_orientation_l2(
@@ -185,21 +185,21 @@ class G1JointPlateBalanceEnv(G1JointLocomotionEnv):
         """
         Plate Force Rewards
         """
-        penalty_plate_friction = mdp.plate_friction_penalty(
-            plate_contact_sensor=self._plate_contact_sensor,
-            plate_quat_w=self._plate.data.root_quat_w,
-            mu_static_plate=self._plate.data._root_physx_view.get_material_properties()[:, 0, 0],
-            mu_static_left_ee=self.robot.data._root_physx_view.get_material_properties()[:, self.left_ee_indexes, 0],
-            mu_static_right_ee=self.robot.data._root_physx_view.get_material_properties()[:, self.right_ee_indexes, 0],
-            weight=-0.2,
-        )
-        penalty_plate_friction = torch.clip(penalty_plate_friction, min=-1.0)
+        # penalty_plate_friction = mdp.plate_friction_penalty(
+        #     plate_contact_sensor=self._plate_contact_sensor,
+        #     plate_quat_w=self._plate.data.root_quat_w,
+        #     mu_static_plate=self._plate.data._root_physx_view.get_material_properties()[:, 0, 0],
+        #     mu_static_left_ee=self.robot.data._root_physx_view.get_material_properties()[:, self.left_ee_indexes, 0],
+        #     mu_static_right_ee=self.robot.data._root_physx_view.get_material_properties()[:, self.right_ee_indexes, 0],
+        #     weight=-0.2,
+        # )
+        # penalty_plate_friction = torch.clip(penalty_plate_friction, min=-1.0)
 
-        penalty_force_l2 = mdp.penalty_force_l2(
-            plate_contact_sensor=self._plate_contact_sensor,
-            plate_quat_w=self._plate.data.root_quat_w,
-            weight=0,
-        )
+        # penalty_force_l2 = mdp.penalty_force_l2(
+        #     plate_contact_sensor=self._plate_contact_sensor,
+        #     plate_quat_w=self._plate.data.root_quat_w,
+        #     weight=0,
+        # )
         #penalty_force_l2 = torch.clip(penalty_force_l2, min=-1.0)
 
 
@@ -211,11 +211,11 @@ class G1JointPlateBalanceEnv(G1JointLocomotionEnv):
             penalty_plate_holding_pos +
             penalty_right_tray_holder_holding_pos +
             penalty_plate_holding_quat +
-            penalty_right_tray_holder_holding_quat +
-            penalty_plate_friction +
-            penalty_force_l2 +
-            penalty_plate_lin_acc_w +
-            penalty_plate_ang_acc_w
+            penalty_right_tray_holder_holding_quat
+            # penalty_plate_friction +
+            # penalty_force_l2 +
+            # penalty_plate_lin_acc_w +
+            # penalty_plate_ang_acc_w
         )
         plate_balance_reward *= self.step_dt
         rewards['upper_body'] += plate_balance_reward
@@ -227,11 +227,11 @@ class G1JointPlateBalanceEnv(G1JointLocomotionEnv):
         self._episode_sums['tracking_plate_pos'] += tracking_plate_pos
         # self._episode_sums['penalty_plate_lin_vel_w'] += penalty_plate_lin_vel_w
         # self._episode_sums['penalty_plate_ang_vel_w'] += penalty_plate_ang_vel_w
-        self._episode_sums['penalty_plate_lin_acc_w'] += penalty_plate_lin_acc_w
-        self._episode_sums['penalty_plate_ang_acc_w'] += penalty_plate_ang_acc_w
+        # self._episode_sums['penalty_plate_lin_acc_w'] += penalty_plate_lin_acc_w
+        # self._episode_sums['penalty_plate_ang_acc_w'] += penalty_plate_ang_acc_w
         self._episode_sums['penalty_plate_projected_gravity'] += penalty_plate_projected_gravity
-        self._episode_sums['penalty_plate_friction'] += penalty_plate_friction
-        self._episode_sums['penalty_force_l2'] += penalty_force_l2
+        # self._episode_sums['penalty_plate_friction'] += penalty_plate_friction
+        # self._episode_sums['penalty_force_l2'] += penalty_force_l2
         
 
         return rewards

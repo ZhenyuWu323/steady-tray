@@ -93,8 +93,8 @@ class G1RobotSceneCfg(DirectRLEnvCfg):
     height_scanner: RayCasterCfg = RayCasterCfg(
         prim_path="/World/envs/env_.*/Robot/torso_link",
         offset=RayCasterCfg.OffsetCfg(pos=(0.0, 0.0, 20.0)),
-        ray_alignment="yaw",
-        #attach_yaw_only=True,
+        #ray_alignment="yaw",
+        attach_yaw_only=True,
         pattern_cfg=patterns.GridPatternCfg(resolution=0.1, size=[1.6, 1.0]),
         debug_vis=False,
         mesh_prim_paths=["/World/ground"],
@@ -233,6 +233,13 @@ class G1RobotPlateSceneCfg(G1RobotSceneCfg):
             mass_props=sim_utils.MassPropertiesCfg(mass=0.1),
             collision_props=sim_utils.CollisionPropertiesCfg(),
         ),
+        # spawn=sim_utils.CuboidCfg(
+        #         size=[0.254, 0.352, 0.018],
+        #         rigid_props=sim_utils.RigidBodyPropertiesCfg(),
+        #         mass_props=sim_utils.MassPropertiesCfg(mass=0.1),
+        #         collision_props=sim_utils.CollisionPropertiesCfg(),
+        #         activate_contact_sensors=True,
+        #     ),
         init_state=RigidObjectCfg.InitialStateCfg(),
     )
     plate_contact_sensor: ContactSensorCfg = ContactSensorCfg(

@@ -509,44 +509,18 @@ class G1ResidualEnv(DirectRLEnv):
             pelvis_pos_w=self.robot.data.body_pos_w[:, self.pelvis_indexes, :],
             pelvis_quat_w=self.robot.data.body_quat_w[:, self.pelvis_indexes, :],
             target_plate_pos_pelvis=self.command_manager.get_command("plate_pose"),
-            weight=2.0,
+            weight=1.0,
             sigma=0.05,
         )
 
         """
         Plate Motion Rewards
         """
-        penalty_plate_lin_acc_w = torch.sum(torch.square(self._plate.data.body_lin_acc_w[:, 0, :]), dim=1) * -0.001
-        penalty_plate_lin_acc_w = torch.clip(penalty_plate_lin_acc_w, min=-1.0)
-        penalty_plate_ang_acc_w = torch.sum(torch.square(self._plate.data.body_ang_acc_w[:, 0, :]), dim=1) * -1e-4
-        penalty_plate_ang_acc_w = torch.clip(penalty_plate_ang_acc_w, min=-1.0)
-
         # plate projected gravity
         penalty_plate_projected_gravity = mdp.flat_orientation_l2(
             projected_gravity_b=self._plate.data.projected_gravity_b,
             weight=-5.0,
         )
-
-
-        """
-        Plate Force Rewards
-        """
-        penalty_plate_friction = mdp.plate_friction_penalty(
-            plate_contact_sensor=self._plate_contact_sensor,
-            plate_quat_w=self._plate.data.root_quat_w,
-            mu_static_plate=self._plate.data._root_physx_view.get_material_properties()[:, 0, 0],
-            mu_static_left_ee=self.robot.data._root_physx_view.get_material_properties()[:, self.left_ee_indexes, 0],
-            mu_static_right_ee=self.robot.data._root_physx_view.get_material_properties()[:, self.right_ee_indexes, 0],
-            weight=-0.2,
-        )
-        penalty_plate_friction = torch.clip(penalty_plate_friction, min=-1.0)
-
-        penalty_force_l2 = mdp.penalty_force_l2(
-            plate_contact_sensor=self._plate_contact_sensor,
-            plate_quat_w=self._plate.data.root_quat_w,
-            weight=-2e-5,
-        )
-        penalty_force_l2 = torch.clip(penalty_force_l2, min=-1.0)
 
         plate_balance_reward = (
             tracking_plate_pos + 
@@ -554,33 +528,18 @@ class G1ResidualEnv(DirectRLEnv):
             penalty_plate_holding_pos +
             penalty_right_tray_holder_holding_pos +
             penalty_plate_holding_quat +
-            penalty_right_tray_holder_holding_quat +
-            penalty_plate_friction +
-            penalty_force_l2 +
-            penalty_plate_lin_acc_w +
-            penalty_plate_ang_acc_w
+            penalty_right_tray_holder_holding_quat
         )
         self._episode_sums['penalty_plate_holding_pos'] += penalty_plate_holding_pos
         self._episode_sums['penalty_right_tray_holder_holding_pos'] += penalty_right_tray_holder_holding_pos
         self._episode_sums['penalty_plate_holding_quat'] += penalty_plate_holding_quat
         self._episode_sums['penalty_right_tray_holder_holding_quat'] += penalty_right_tray_holder_holding_quat
         self._episode_sums['tracking_plate_pos'] += tracking_plate_pos
-        self._episode_sums['penalty_plate_lin_acc_w'] += penalty_plate_lin_acc_w
-        self._episode_sums['penalty_plate_ang_acc_w'] += penalty_plate_ang_acc_w
         self._episode_sums['penalty_plate_projected_gravity'] += penalty_plate_projected_gravity
-        self._episode_sums['penalty_plate_friction'] += penalty_plate_friction
-        self._episode_sums['penalty_force_l2'] += penalty_force_l2
         return plate_balance_reward
 
 
     def _get_object_rewards(self) -> torch.Tensor:
-        """
-        Object Dropped
-        """
-        # object_dropped = self._object.data.root_pos_w[:, 2] < self.cfg.termination_height
-        # penalty_object_dropped = object_dropped * -1.5
-        
-
         """
         Object Pose Rewards
         """
@@ -620,15 +579,6 @@ class G1ResidualEnv(DirectRLEnv):
         """
         Object Force Rewards
         """
-        penalty_object_friction = mdp.object_friction_penalty(
-            object_contact_sensor=self._object_contact_sensor,
-            plate_quat_w=self._plate.data.root_quat_w,
-            mu_static_object=self._object.data._root_physx_view.get_material_properties()[:, 0, 0],
-            mu_static_plate=self._plate.data._root_physx_view.get_material_properties()[:, 0, 0],
-            weight=-0.2,
-        )
-        penalty_object_friction = torch.clip(penalty_object_friction, min=-1.0)
-
 
         object_stabilization_reward = (
             penalty_object_pose_deviation +
@@ -636,8 +586,7 @@ class G1ResidualEnv(DirectRLEnv):
             penalty_object_projected_gravity +
             object_upright_bonus +
             penalty_object_lin_vel_plate +
-            penalty_object_ang_vel_plate +
-            penalty_object_friction
+            penalty_object_ang_vel_plate 
         )
 
         self._episode_sums['penalty_object_pose_deviation'] += penalty_object_pose_deviation
@@ -646,7 +595,6 @@ class G1ResidualEnv(DirectRLEnv):
         self._episode_sums['object_upright_bonus'] += object_upright_bonus
         self._episode_sums['penalty_object_lin_vel_plate'] += penalty_object_lin_vel_plate
         self._episode_sums['penalty_object_ang_vel_plate'] += penalty_object_ang_vel_plate
-        self._episode_sums['penalty_object_friction'] += penalty_object_friction
         return object_stabilization_reward
         
     
@@ -690,11 +638,16 @@ class G1ResidualEnv(DirectRLEnv):
         time_out = self.episode_length_buf >= self.max_episode_length - 1
         # fall
         died = self.robot.data.body_pos_w[:, self.ref_body_index, 2] < self.cfg.termination_height
-
+        # plate dropped
         plate_dropped = self._plate.data.root_pos_w[:, 2] < self.cfg.termination_height
-        #object_dropped = self._object.data.root_pos_w[:, 2] < self.cfg.termination_height
+        # object dropped
+        object_dropped = self._object.data.root_pos_w[:, 2] < self.cfg.termination_height
+        # object bad orientation
+        #object_bad_orientation = torch.acos(-self._object.data.projected_gravity_b[:, 2]).abs() > 1.57
+
         died = torch.logical_or(died, plate_dropped)
-        #died = torch.logical_or(died, object_dropped)
+        died = torch.logical_or(died, object_dropped)
+        # died = torch.logical_or(died, object_bad_orientation)
 
         return died, time_out
     
@@ -872,9 +825,9 @@ Helper Functions
 @torch.jit.script
 def compute_plate_pos_tracking_weight(object_projected_gravity: torch.Tensor, weight: float):
 
-    tilt_angle = torch.acos(-torch.clamp(object_projected_gravity[:, 2], -1, 1))
+    tilt_angle = torch.acos(-torch.clamp(object_projected_gravity[:, 2], -1.0, 1.0)).abs()
     
-    tilt_threshold = 0.15  
+    tilt_threshold = 0.17  
     weight_multiplier = torch.where(
         tilt_angle > tilt_threshold,
         torch.exp(-(tilt_angle - tilt_threshold) * 10),  
