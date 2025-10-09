@@ -226,20 +226,20 @@ class G1RobotPlateSceneCfg(G1RobotSceneCfg):
     plate_offset = PLATE_OFFSET # x, y, z offset from pelvis
     plate_cfg = RigidObjectCfg(
         prim_path="/World/envs/env_.*/Plate",
-        spawn=sim_utils.UsdFileCfg(
-            usd_path=f"{ASSETS_DATA_DIR}/tray_flat.usd",
-            activate_contact_sensors=True,
-            rigid_props=sim_utils.RigidBodyPropertiesCfg(),
-            mass_props=sim_utils.MassPropertiesCfg(mass=0.1),
-            collision_props=sim_utils.CollisionPropertiesCfg(),
-        ),
-        # spawn=sim_utils.CuboidCfg(
-        #         size=[0.254, 0.352, 0.018],
-        #         rigid_props=sim_utils.RigidBodyPropertiesCfg(),
-        #         mass_props=sim_utils.MassPropertiesCfg(mass=0.1),
-        #         collision_props=sim_utils.CollisionPropertiesCfg(),
-        #         activate_contact_sensors=True,
-        #     ),
+        # spawn=sim_utils.UsdFileCfg(
+        #     usd_path=f"{ASSETS_DATA_DIR}/tray_flat.usd",
+        #     activate_contact_sensors=True,
+        #     rigid_props=sim_utils.RigidBodyPropertiesCfg(),
+        #     mass_props=sim_utils.MassPropertiesCfg(mass=0.1),
+        #     collision_props=sim_utils.CollisionPropertiesCfg(),
+        # ),
+        spawn=sim_utils.CuboidCfg(
+                size=[0.254, 0.352, 0.018],
+                rigid_props=sim_utils.RigidBodyPropertiesCfg(),
+                mass_props=sim_utils.MassPropertiesCfg(mass=0.1),
+                collision_props=sim_utils.CollisionPropertiesCfg(),
+                activate_contact_sensors=True,
+            ),
         init_state=RigidObjectCfg.InitialStateCfg(),
     )
     plate_contact_sensor: ContactSensorCfg = ContactSensorCfg(

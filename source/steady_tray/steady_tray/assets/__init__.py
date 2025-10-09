@@ -14,7 +14,8 @@ ASSETS_DIR = os.path.abspath(os.path.dirname(__file__))
 ASSETS_DATA_DIR = os.path.join(ASSETS_DIR, "data")
 """Path to the data directory inside assets."""
 
-PLATE_OFFSET = [0.29792, 0.0, 0.14100] # x, y, z offset from pelvis
+#PLATE_OFFSET = [0.29792, 0.0, 0.14100] # x, y, z offset from pelvis
+PLATE_OFFSET = [0.30225, 0.0, 0.14100] # x, y, z offset from pelvis
 
 
 # Check if data directory exists

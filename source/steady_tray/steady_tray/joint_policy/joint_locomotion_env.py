@@ -267,25 +267,25 @@ class G1JointLocomotionEnv(DirectRLEnv):
         Lower Body Feet Contact Rewards
         """
         # feet slides penalty
-        penalty_feet_slide = mdp.feet_slide(
-            body_lin_vel_w=self.robot.data.body_lin_vel_w,
-            contact_sensor=self._contact_sensor,
-            feet_body_indexes=self.feet_body_indexes,
-            weight=-0.2,
-        )
+        # penalty_feet_slide = mdp.feet_slide(
+        #     body_lin_vel_w=self.robot.data.body_lin_vel_w,
+        #     contact_sensor=self._contact_sensor,
+        #     feet_body_indexes=self.feet_body_indexes,
+        #     weight=-0.2,
+        # )
 
 
-        # feet gait
-        feet_gait_reward = mdp.feet_gait(
-            env=self,
-            contact_sensor=self._contact_sensor,
-            feet_body_indexes=self.feet_body_indexes,
-            period=0.8,
-            offset=[0.0, 0.5],
-            threshold=0.55,
-            command=self.command_manager.get_command("base_velocity"),
-            weight=0.5,
-        )
+        # # feet gait
+        # feet_gait_reward = mdp.feet_gait(
+        #     env=self,
+        #     contact_sensor=self._contact_sensor,
+        #     feet_body_indexes=self.feet_body_indexes,
+        #     period=0.8,
+        #     offset=[0.0, 0.5],
+        #     threshold=0.55,
+        #     command=self.command_manager.get_command("base_velocity"),
+        #     weight=0.5,
+        # )
 
         # feet clearance
         feet_clearance_reward = mdp.feet_clearance(
@@ -366,9 +366,9 @@ class G1JointLocomotionEnv(DirectRLEnv):
                              penalty_lower_body_dof_vel + 
                              penalty_lower_body_dof_torque +
                              penalty_lower_body_action_rate + 
-                             penalty_feet_slide + 
+                             #penalty_feet_slide + 
                              penalty_base_height +
-                             feet_gait_reward +
+                             #feet_gait_reward +
                              feet_clearance_reward +
                              alive_reward)
         
@@ -385,7 +385,7 @@ class G1JointLocomotionEnv(DirectRLEnv):
 
         self._episode_sums["tracking_lin_vel_xy"] += tracking_lin_vel_xy
         self._episode_sums["tracking_ang_vel_z"] += tracking_ang_vel_z
-        self._episode_sums["gait_phase_reward"] += feet_gait_reward
+        #self._episode_sums["gait_phase_reward"] += feet_gait_reward
         self._episode_sums["feet_clearance_reward"] += feet_clearance_reward
         self._episode_sums["tracking_upper_body_dof_pos"] += tracking_upper_body_dof_pos
         self._episode_sums["penalty_lower_body_dof_torque"] += penalty_lower_body_dof_torque
